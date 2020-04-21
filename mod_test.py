@@ -6,13 +6,18 @@ from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
 from gui.battle_control.avatar_getter import getPlayerName, getArena
 from avatar_helpers import getAvatarDatabaseID
-
+from adisp import async, process
 
 
 mod_toggle = 3 #[0,1,2,3] fьr [aus, only arty, only HE, HE + teamBL]
 #mit Config Datei kцnnen Zustдnde bleiben und sind nicht bei jedem Spielstart wieder auf Default
-iterator_ = 0
+
 check_running = False
+
+@async
+@process
+def wait(seconds, callback=None):
+    BigWorld.callback(seconds, callback)
 
 def teambl_key():
     global check_running
@@ -22,29 +27,19 @@ def teambl_key():
     def proto():
         return None
     
-    databID = getAvatarDatabaseID()      
-    name_list = []
-    ID_list = []
-    for (vehicleID, vData) in getArena().vehicles.iteritems():
-        databaseID = vData['accountDBID']
-        acc_name = vData['name']
-        if databaseID != databID:
-            name_list.append(acc_name)
-            ID_list.append(databaseID)
+    databID = getAvatarDatabaseID()
     
+    @process
     def it_func():
-        global iterator_ # is 0 at start
-        proto.contacts.addIgnored(ID_list[iterator_], name_list[iterator_])
-        iterator_ += 1
-        if iterator_ < len(ID_list):
-            BigWorld.callback(1.1, functools.partial(it_func))
-        else:
-            iterator_ = 0
-            return
+        for (vehicleID, vData) in getArena().vehicles.iteritems():
+            databaseID = vData['accountDBID']
+            acc_name = vData['name']
+            if databaseID != databID:
+                proto.contacts.addIgnored(databaseID, acc_name)
+                yield wait(1.1)
+
     it_func()
-    del name_list[:]
-    del ID_list[:]
-    check_running = False
+    
     return
 
 def sendMessage(message, types):
@@ -58,6 +53,7 @@ def key_events_():
     old_handler = game.handleKeyEvent
     def new_handler(event):
         global mod_toggle
+        global check_running
         isDown, key, mods, isRepeat = game.convertKeyEvent(event)
         if isDown and mods == 4 and key == Keys.KEY_O:
             mod_toggle += 1
@@ -83,6 +79,7 @@ def key_events_():
                 sendMessage("TeamBL mit key",SystemMessages.SM_TYPE.Warning)
                 if check_running == False:
                     teambl_key()
+                    check_running = False
         old_handler(event)
         return
     game.handleKeyEvent = new_handler
