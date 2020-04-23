@@ -15,10 +15,10 @@ mod_toggle = 3 #[0,1,2,3] fьr [aus, only arty, only HE, HE + teamBL]
 check_running = False
 
 @async
-@process
-def wait(seconds, callback=None):
-    BigWorld.callback(seconds, callback)
+def wait(seconds, callback):
+    BigWorld.callback(seconds, lambda: callback(None))
 
+@process
 def teambl_key():
     global check_running
     check_running = True
@@ -29,18 +29,13 @@ def teambl_key():
     
     databID = getAvatarDatabaseID()
     
-    @process
-    def it_func():
-        for (vehicleID, vData) in getArena().vehicles.iteritems():
-            databaseID = vData['accountDBID']
-            acc_name = vData['name']
-            if databaseID != databID:
-                proto.contacts.addIgnored(databaseID, acc_name)
-                yield wait(1.1)
-
-    it_func()
-    
-    return
+    for (vehicleID, vData) in getArena().vehicles.iteritems():
+        databaseID = vData['accountDBID']
+        acc_name = vData['name']
+        if databaseID != databID:
+            proto.contacts.addIgnored(databaseID, acc_name)
+            yield wait(1.1)
+    check_running = False
 
 def sendMessage(message, types):
     if BigWorld.player():  
@@ -79,7 +74,6 @@ def key_events_():
                 sendMessage("TeamBL mit key",SystemMessages.SM_TYPE.Warning)
                 if check_running == False:
                     teambl_key()
-                    check_running = False
         old_handler(event)
         return
     game.handleKeyEvent = new_handler
