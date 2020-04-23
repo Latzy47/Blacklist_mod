@@ -9,8 +9,8 @@ from avatar_helpers import getAvatarDatabaseID
 from adisp import async, process
 
 
-mod_toggle = 3 #[0,1,2,3] fьr [aus, only arty, only HE, HE + teamBL]
-#mit Config Datei kцnnen Zustдnde bleiben und sind nicht bei jedem Spielstart wieder auf Default
+mod_toggle = 3 #[0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
+#mit Config Datei kцnnen Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
 
 check_running = False
 
@@ -63,13 +63,13 @@ def key_events_():
             else:
                 sendMessage("HE + blacklist Teams",SystemMessages.SM_TYPE.Warning)
         if mod_toggle == 1:
-            pass #funktion auto arty einfьgen
+            pass #funktion auto arty einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
                 sendMessage("arty mit key",SystemMessages.SM_TYPE.Warning) #funktion arty mit key
         elif mod_toggle == 2:
-            pass #funktion auto HE einfьgen
+            pass #funktion auto HE einfügen
         elif mod_toggle == 3:
-            pass #funktion auto HE einfьgen
+            pass #funktion auto HE einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
                 sendMessage("TeamBL mit key",SystemMessages.SM_TYPE.Warning)
                 if check_running == False:
