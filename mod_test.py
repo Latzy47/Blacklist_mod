@@ -9,10 +9,13 @@ from avatar_helpers import getAvatarDatabaseID
 from adisp import async, process
 
 mod_toggle = 3  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
-# mit Config Datei kцnnen Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
+# mit Config Datei können Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
 
 check_running = False
 
+@proto_getter(PROTO_TYPE.MIGRATION)
+    def proto():
+        return None
 
 @async
 def wait(seconds, callback):
@@ -24,18 +27,17 @@ def teambl_key():
     global check_running
     check_running = True
 
-    @proto_getter(PROTO_TYPE.MIGRATION)
-    def proto():
-        return None
-
     databID = getAvatarDatabaseID()
 
     for (vehicleID, vData) in getArena().vehicles.iteritems():
         databaseID = vData['accountDBID']
         acc_name = vData['name']
         if databaseID != databID:
-            proto.contacts.addIgnored(databaseID, acc_name)
-            yield wait(1.1)
+            if databaseID == 0:
+                pass
+            else:
+                proto.contacts.addIgnored(databaseID, acc_name)
+                yield wait(1.1)
     check_running = False
 
 
