@@ -27,8 +27,8 @@ def wait(seconds, callback):
 
 
 class MyError(IChatError):
-    def getMessage(self):
-        return 'Hello World'
+    def getMessage(self, name):
+        return '{name} is anonymized!'.format(name=name)
 
 
 
@@ -45,7 +45,7 @@ def teambl_key():
         acc_name = vData['name']
         if databaseID != databID:
             if databaseID == 0:
-                pass
+                g_messengerEvents.onErrorReceived(MyError().getMessage(acc_name))
             else:
                 proto.contacts.addIgnored(databaseID, acc_name)
                 yield wait(1.1)
@@ -88,7 +88,6 @@ def key_events_():
         elif mod_toggle == 3:
             pass  # funktion auto HE einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
-                g_messengerEvents.onErrorReceived(MyError())
                 if check_running == False:
                     teambl_key()
         old_handler(event)
