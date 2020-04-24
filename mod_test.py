@@ -16,8 +16,8 @@ mod_toggle = 3  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
 check_running = False
 
 @proto_getter(PROTO_TYPE.MIGRATION)
-    def proto():
-        return None
+def proto():
+    return None
 
 @async
 def wait(seconds, callback):
