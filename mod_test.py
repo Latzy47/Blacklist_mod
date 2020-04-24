@@ -7,6 +7,8 @@ from messenger.proto import proto_getter
 from gui.battle_control.avatar_getter import getPlayerName, getArena
 from avatar_helpers import getAvatarDatabaseID
 from adisp import async, process
+from messenger.proto.events import g_messengerEvents
+from messenger.proto.interfaces import IChatError
 
 mod_toggle = 3  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
 # mit Config Datei können Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
@@ -20,6 +22,15 @@ check_running = False
 @async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
+
+
+
+
+class MyError(IChatError):
+    def getMessage(self):
+        return 'Hello World'
+
+
 
 
 @process
@@ -77,7 +88,7 @@ def key_events_():
         elif mod_toggle == 3:
             pass  # funktion auto HE einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
-                sendMessage("TeamBL mit key", SystemMessages.SM_TYPE.Warning)
+                g_messengerEvents.onErrorReceived(MyError())
                 if check_running == False:
                     teambl_key()
         old_handler(event)
