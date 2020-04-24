@@ -23,15 +23,9 @@ def proto():
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
 
-
-
-
 class MyError(IChatError):
-    def getMessage(self, name):
-        return '{name} is anonymized!'.format(name=name)
-
-
-
+    def getMessage(self):
+        return 'Hello World'
 
 @process
 def teambl_key():
@@ -45,7 +39,7 @@ def teambl_key():
         acc_name = vData['name']
         if databaseID != databID:
             if databaseID == 0:
-                g_messengerEvents.onErrorReceived(MyError().getMessage(acc_name))
+                pass
             else:
                 proto.contacts.addIgnored(databaseID, acc_name)
                 yield wait(1.1)
@@ -88,6 +82,7 @@ def key_events_():
         elif mod_toggle == 3:
             pass  # funktion auto HE einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
+                g_messengerEvents.onErrorReceived(MyError())
                 if check_running == False:
                     teambl_key()
         old_handler(event)
