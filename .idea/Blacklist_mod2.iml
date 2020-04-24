@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
+    <content url="file://$USER_HOME$/OneDrive/Desktop/mod erstellen/XVM/res_mods/mods/xfw_packages" />
     <content url="file://$USER_HOME$/OneDrive/Desktop/mod erstellen/scripts_better/source/res/scripts">
       <sourceFolder url="file://$USER_HOME$/OneDrive/Desktop/mod erstellen/scripts_better/source/res/scripts/common" isTestSource="false" />
       <sourceFolder url="file://$USER_HOME$/OneDrive/Desktop/mod erstellen/scripts_better/source/res/scripts/client_common" isTestSource="false" />
