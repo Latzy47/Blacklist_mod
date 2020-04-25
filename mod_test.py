@@ -7,8 +7,7 @@ from messenger.proto import proto_getter
 from gui.battle_control.avatar_getter import getPlayerName, getArena
 from avatar_helpers import getAvatarDatabaseID
 from adisp import async, process
-from messenger.proto.events import g_messengerEvents
-from messenger.proto.interfaces import IChatError
+
 
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 _mod_toggle = mod_toggle['HE + teamBL']  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
@@ -23,10 +22,6 @@ def proto():
 @async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
-
-class MyError(IChatError):
-    def getMessage(self):
-        return 'Hello World'
 
 @process
 def teambl_key():
@@ -85,7 +80,7 @@ def key_events_():
         elif _mod_toggle == mod_toggle['HE + teamBL']:
             pass  # funktion auto HE einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
-                g_messengerEvents.onErrorReceived(MyError())
+
                 if check_running == False:
                     teambl_key()
         old_handler(event)
