@@ -4,10 +4,10 @@ import functools
 from gui import SystemMessages
 from messenger.m_constants import PROTO_TYPE
 from messenger.proto import proto_getter
-from gui.battle_control.avatar_getter import getPlayerName, getArena
+from gui.battle_control.avatar_getter import getArena
 from avatar_helpers import getAvatarDatabaseID
 from adisp import async, process
-
+from gui.battle_control.controllers import anonymizer_fakes_ctrl
 
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 _mod_toggle = mod_toggle['HE + teamBL']  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
@@ -18,6 +18,8 @@ check_running = False
 @proto_getter(PROTO_TYPE.MIGRATION)
 def proto():
     return None
+
+adding = anonymizer_fakes_ctrl.AnonymizerFakesController()
 
 @async
 def wait(seconds, callback):
@@ -32,13 +34,10 @@ def teambl_key():
 
     for (vehicleID, vData) in getArena().vehicles.iteritems():
         databaseID = vData['accountDBID']
-        acc_name = vData['name']
+        av_ses_id = vData['avatarSessionID']
         if databaseID != databID:
-            if databaseID == 0:
-                pass
-            else:
-                proto.contacts.addIgnored(databaseID, acc_name)
-                yield wait(1.1)
+            adding.addBattleIgnored(av_ses_id)
+            yield wait(1.1)
     check_running = False
 
 
