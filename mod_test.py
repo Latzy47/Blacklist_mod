@@ -35,8 +35,9 @@ def teambl_key():
     for (vehicleID, vData) in getArena().vehicles.iteritems():
         databaseID = vData['accountDBID']
         av_ses_id = vData['avatarSessionID']
+        acc_name = vData['name']
         if databaseID != databID:
-            adding.addBattleIgnored(av_ses_id)
+            adding.addTmpIgnored(av_ses_id, acc_name)
             yield wait(1.1)
     check_running = False
 
