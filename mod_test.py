@@ -19,12 +19,6 @@ _mod_toggle = mod_toggle['HE + teamBL']  # [0,1,2,3] für [aus, only arty, only 
 
 check_running = False
 
-@proto_getter(PROTO_TYPE.MIGRATION)
-def proto():
-    return None
-
-
-
 @async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
@@ -32,18 +26,31 @@ def wait(seconds, callback):
 @process
 def teambl_key():
     global check_running
+    prebID = 0
     check_running = True
-    sessionProvider = dependency.instance(IBattleSessionProvider)
-    setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-    adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-    databID = getAvatarDatabaseID()
+    arena = getattr(BigWorld.player(), 'arena', None)
+    if arena is not None:
+        sessionProvider = dependency.instance(IBattleSessionProvider)
+        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+        adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+        databID = getAvatarDatabaseID()
 
-    for (vehicleID, vData) in getArena().vehicles.iteritems():
-        databaseID = vData['accountDBID']
-        #av_ses_id = vData['avatarSessionID']
-        if databaseID != databID:
-            adding.addBattleIgnored(vehicleID)
-            yield wait(1.1)
+        vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
+        if vehID is not None and vehID in arena.vehicles:
+            prebID = arena.vehicles[vehID]['prebattleID']
+
+        for (vehicleID, vData) in getArena().vehicles.iteritems():
+            databaseID = vData['accountDBID']
+            av_ses_id = vData['avatarSessionID']
+            _prebattleID = vData['prebattleID']
+            user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
+            if databaseID != databID and not user.isFriend():
+                if prebID > 0 and prebID != _prebattleID:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+                elif prebID == 0:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
     check_running = False
 
 
@@ -85,7 +92,6 @@ def key_events_():
         elif _mod_toggle == mod_toggle['HE + teamBL']:
             pass  # funktion auto HE einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
-
                 if check_running == False:
                     teambl_key()
         old_handler(event)
