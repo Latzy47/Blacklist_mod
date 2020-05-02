@@ -14,6 +14,7 @@ import BattleReplay
 from messenger.m_constants import UserEntityScope
 import logging
 from messenger import MessengerEntry
+from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
 
 _logger = logging.getLogger(__name__)
 gui = MessengerEntry.g_instance.gui
@@ -27,6 +28,46 @@ check_running = False
 @async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
+
+@process
+def arty_key():
+    global check_running
+    prebID = 0
+    check_running = True
+    arena = getattr(BigWorld.player(), 'arena', None)
+    if arena is not None:
+        sessionProvider = dependency.instance(IBattleSessionProvider)
+        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+        adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+        databID = getAvatarDatabaseID()
+
+        vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
+        if vehID is not None and vehID in arena.vehicles:
+            prebID = arena.vehicles[vehID]['prebattleID']
+
+        for (vehicleID, vData) in getArena().vehicles.iteritems():
+            databaseID = vData['accountDBID']
+            av_ses_id = vData['avatarSessionID']
+            _prebattleID = vData['prebattleID']
+            tag = vData['vehicleType'].type.tags
+            user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
+            if user is not None:
+                if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag and not (user.isFriend() or user.isIgnored()):
+                    if prebID > 0 and prebID != _prebattleID:
+                        adding.addBattleIgnored(av_ses_id)
+                        yield wait(1.1)
+                    elif prebID == 0:
+                        adding.addBattleIgnored(av_ses_id)
+                        yield wait(1.1)
+            else:
+                if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag:
+                    if prebID > 0 and prebID != _prebattleID:
+                        adding.addBattleIgnored(av_ses_id)
+                        yield wait(1.1)
+                    elif prebID == 0:
+                        adding.addBattleIgnored(av_ses_id)
+                        yield wait(1.1)
+    check_running = False
 
 @process
 def teambl_key():
@@ -50,7 +91,7 @@ def teambl_key():
             _prebattleID = vData['prebattleID']
             user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
             if user is not None:
-                if databaseID != databID and not user.isFriend():
+                if databaseID != databID and not (user.isFriend() or user.isIgnored()):
                     if prebID > 0 and prebID != _prebattleID:
                         adding.addBattleIgnored(av_ses_id)
                         yield wait(1.1)
@@ -116,7 +157,8 @@ def key_events_():
         if _mod_toggle == mod_toggle['only arty']:
             pass  # funktion auto arty einfügen
             if isDown and mods == 4 and key == Keys.KEY_B:
-                sendMessage("arty mit key", SystemMessages.SM_TYPE.Warning)  # funktion arty mit key
+                if check_running == False:
+                    arty_key()
         elif _mod_toggle == mod_toggle['only HE']:
             pass  # funktion auto HE einfügen
         elif _mod_toggle == mod_toggle['HE + teamBL']:
