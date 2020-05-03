@@ -1,16 +1,5 @@
-
-
-@run_before(PlayerAvatar, 'onBattleEvents')
-def before1(self, events):
-    pass # do stuff1
-
-
-@run_before(PlayerAvatar, 'onBattleEvents')
-def before2(self, events):
-    pass # do stuff2
-
-
-arena = getattr(BigWorld.player(), 'arena', None)
-            if arena is not None:
-                avatar = PlayerAvatar()
-                avatar.onBattleEvents()
+2020-05-03 23:01:55.387: ERROR: Traceback (most recent call last):
+2020-05-03 23:01:55.387: ERROR:   File "python\gui\battlehits\utils.py", line 18, in <lambda>
+2020-05-03 23:01:55.387: ERROR:   File "python\gui\battlehits\hooks.py", line 109, in handleKeyEvent
+2020-05-03 23:01:55.387: ERROR:   File "mod_extended_auto_bl.py", line 272, in new_handler
+2020-05-03 23:01:55.387: ERROR: TypeError: PlayerAvatar() Cannot directly construct objects of this type
