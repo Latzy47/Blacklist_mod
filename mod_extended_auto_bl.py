@@ -8,6 +8,7 @@ from avatar_helpers import getAvatarDatabaseID
 from adisp import async, process
 from gui.battle_control.controllers import anonymizer_fakes_ctrl
 from gui.battle_control.controllers import repositories
+from gui.battle_control.controllers import feedback_events
 from helpers import dependency
 from skeletons.gui.battle_session import IBattleSessionProvider
 import BattleReplay
@@ -15,15 +16,80 @@ from messenger.m_constants import UserEntityScope
 import logging
 from messenger import MessengerEntry
 from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
+from Avatar import PlayerAvatar
+from debug_utils import LOG_CURRENT_EXCEPTION
+import inspect
+from functools import wraps
+from BattleFeedbackCommon import BATTLE_EVENT_TYPE
 
 _logger = logging.getLogger(__name__)
 gui = MessengerEntry.g_instance.gui
+DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
+ BATTLE_EVENT_TYPE.TRACK_ASSIST,
+ BATTLE_EVENT_TYPE.STUN_ASSIST,
+ BATTLE_EVENT_TYPE.DAMAGE,
+ BATTLE_EVENT_TYPE.TANKING,
+ BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
 
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 _mod_toggle = mod_toggle['HE + teamBL']  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
 # mit Config Datei können Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
 
 check_running = False
+
+def hook(hook_handler):
+    def build_decorator(module, func_name):
+        def decorator(func):
+            orig_func = getattr(module, func_name)
+
+            @wraps(orig_func)
+            def func_wrapper(*args, **kwargs):
+                return hook_handler(orig_func, func, *args, **kwargs)
+
+            if inspect.ismodule(module):
+                setattr(sys.modules[module.__name__], func_name, func_wrapper)
+            elif inspect.isclass(module):
+                setattr(module, func_name, func_wrapper)
+
+            return func
+
+        return decorator
+
+    return build_decorator
+
+
+@hook
+def run_before(orig_func, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except:
+        LOG_CURRENT_EXCEPTION()
+    finally:
+        return orig_func(*args, **kwargs)
+
+
+@run_before(PlayerAvatar, 'onBattleEvents')
+def before_test(self, events):
+    arena = getattr(BigWorld.player(), 'arena', None)
+    if arena is not None:
+        player = BigWorld.player()
+        guiSessionProvider = player.guiSessionProvider
+        if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
+            for data in events:
+                feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
+                eventType = feedbackEvent.getBattleEventType()
+                #target_id = feedbackEvent.getTargetID()
+                if eventType in DAMAGE_EVENTS:
+                    extra = feedbackEvent.getExtra()
+                    if extra:
+                        if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
+                            _logger.error(extra.getShellType())
+
+
+
+avatar = PlayerAvatar()
+
+avatar.onBattleEvents()
 
 @async
 def wait(seconds, callback):
