@@ -77,7 +77,7 @@ def run_before(orig_func, func, *args, **kwargs):
 
 
 @run_before(PlayerAvatar, 'onBattleEvents')
-def before(self, events):
+def before(events):
     global check_running
     global mod_toggle
     global _mod_toggle
@@ -254,14 +254,14 @@ def key_events_():
                 elif BigWorld.player():
                     sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
         if _mod_toggle == mod_toggle['only arty']:
-            avatar.onBattleEvents()
+            before()
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if check_running == False:
                     arty_key()
         elif _mod_toggle == mod_toggle['only HE']:
-            avatar.onBattleEvents()
+            before()
         elif _mod_toggle == mod_toggle['HE + teamBL']:
-            avatar.onBattleEvents()
+            before()
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if check_running == False:
                     teambl_key()
@@ -271,6 +271,6 @@ def key_events_():
     game.handleKeyEvent = new_handler
     return
 
-avatar = PlayerAvatar()
+
 if not BattleReplay.isPlaying():
     key_events_()
