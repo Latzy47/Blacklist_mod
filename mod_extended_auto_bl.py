@@ -30,6 +30,13 @@ DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
  BATTLE_EVENT_TYPE.DAMAGE,
  BATTLE_EVENT_TYPE.TANKING,
  BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
+class SHELL_TYPES(object):
+    HOLLOW_CHARGE = 'HOLLOW_CHARGE'
+    HIGH_EXPLOSIVE = 'HIGH_EXPLOSIVE'
+    ARMOR_PIERCING = 'ARMOR_PIERCING'
+    ARMOR_PIERCING_HE = 'ARMOR_PIERCING_HE'
+    ARMOR_PIERCING_CR = 'ARMOR_PIERCING_CR'
+    SMOKE = 'SMOKE'
 
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 _mod_toggle = mod_toggle['HE + teamBL']  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
@@ -78,18 +85,19 @@ def before_test(self, events):
             for data in events:
                 feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
                 eventType = feedbackEvent.getBattleEventType()
-                #target_id = feedbackEvent.getTargetID()
+                target_id = feedbackEvent.getTargetID()
                 if eventType in DAMAGE_EVENTS:
                     extra = feedbackEvent.getExtra()
                     if extra:
                         if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
                             _logger.error(extra.getShellType())
+                            _logger.error(target_id)  # int
 
 
-
-avatar = PlayerAvatar()
-
-avatar.onBattleEvents()
+arena = getattr(BigWorld.player(), 'arena', None)
+if arena is not None:
+    avatar = PlayerAvatar()
+    avatar.onBattleEvents()
 
 @async
 def wait(seconds, callback):
