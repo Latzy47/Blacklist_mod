@@ -1,12 +1,12 @@
 
 
-@run_before1(PlayerAvatar, 'onBattleEvents')
-def before(self, events):
+@run_before(PlayerAvatar, 'onBattleEvents')
+def before1(self, events):
     pass # do stuff1
 
 
-@run_before1(PlayerAvatar, 'onBattleEvents')
-def before(self, events):
+@run_before(PlayerAvatar, 'onBattleEvents')
+def before2(self, events):
     pass # do stuff2
 
 
