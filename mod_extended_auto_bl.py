@@ -254,31 +254,23 @@ def key_events_():
                 elif BigWorld.player():
                     sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
         if _mod_toggle == mod_toggle['only arty']:
-            arena = getattr(BigWorld.player(), 'arena', None)
-            if arena is not None:
-                avatar3 = PlayerAvatar()
-                avatar3.onBattleEvents()
-                if isDown and mods == 4 and key == Keys.KEY_B:
-                    if check_running == False:
-                        arty_key()
+            avatar.onBattleEvents()
+            if isDown and mods == 4 and key == Keys.KEY_B:
+                if check_running == False:
+                    arty_key()
         elif _mod_toggle == mod_toggle['only HE']:
-            arena = getattr(BigWorld.player(), 'arena', None)
-            if arena is not None:
-                avatar2 = PlayerAvatar()
-                avatar2.onBattleEvents()
+            avatar.onBattleEvents()
         elif _mod_toggle == mod_toggle['HE + teamBL']:
-            arena = getattr(BigWorld.player(), 'arena', None)
-            if arena is not None:
-                avatar = PlayerAvatar()
-                avatar.onBattleEvents()
-                if isDown and mods == 4 and key == Keys.KEY_B:
-                    if check_running == False:
-                        teambl_key()
+            avatar.onBattleEvents()
+            if isDown and mods == 4 and key == Keys.KEY_B:
+                if check_running == False:
+                    teambl_key()
         old_handler(event)
         return
 
     game.handleKeyEvent = new_handler
     return
 
+avatar = PlayerAvatar()
 if not BattleReplay.isPlaying():
     key_events_()
