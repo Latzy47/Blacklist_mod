@@ -21,6 +21,7 @@ from debug_utils import LOG_CURRENT_EXCEPTION
 import inspect
 from functools import wraps
 from BattleFeedbackCommon import BATTLE_EVENT_TYPE
+import sys
 
 _logger = logging.getLogger(__name__)
 gui = MessengerEntry.g_instance.gui
@@ -76,11 +77,16 @@ def run_before(orig_func, func, *args, **kwargs):
 
 
 @run_before(PlayerAvatar, 'onBattleEvents')
-def before_test(self, events):
+def before(self, events):
+    global check_running
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
         player = BigWorld.player()
         guiSessionProvider = player.guiSessionProvider
+        id_list = []
+        sessionProvider = dependency.instance(IBattleSessionProvider)
+        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+        adding2 = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
         if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
             for data in events:
                 feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
@@ -90,14 +96,26 @@ def before_test(self, events):
                     extra = feedbackEvent.getExtra()
                     if extra:
                         if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
-                            _logger.error(extra.getShellType())
-                            _logger.error(target_id)  # int
+                            if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
+                                id_list.append(str(target_id))
+        while len(id_list) > 0:
+            check_running = True
+            user = adding2.usersStorage.getUser(id_list[0], scope=UserEntityScope.BATTLE)
+            if user is not None:
+                if not (user.isFriend() or user.isIgnored()):
+                    adding2.addBattleIgnored(id_list[0])
+                    id_list.pop(0)
+                    yield wait(1.1)
+                else:
+                    id_list.pop(0)
+            else:
+                adding2.addBattleIgnored(id_list[0])
+                id_list.pop(0)
+                yield wait(1.1)
+            check_running = False
 
 
-arena = getattr(BigWorld.player(), 'arena', None)
-if arena is not None:
-    avatar = PlayerAvatar()
-    avatar.onBattleEvents()
+
 
 @async
 def wait(seconds, callback):
@@ -148,38 +166,36 @@ def teambl_key():
     global check_running
     prebID = 0
     check_running = True
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        sessionProvider = dependency.instance(IBattleSessionProvider)
-        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-        adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-        databID = getAvatarDatabaseID()
+    sessionProvider = dependency.instance(IBattleSessionProvider)
+    setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+    adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+    databID = getAvatarDatabaseID()
 
-        vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
-        if vehID is not None and vehID in arena.vehicles:
-            prebID = arena.vehicles[vehID]['prebattleID']
+    vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
+    if vehID is not None and vehID in arena.vehicles:
+        prebID = arena.vehicles[vehID]['prebattleID']
 
-        for (vehicleID, vData) in getArena().vehicles.iteritems():
-            databaseID = vData['accountDBID']
-            av_ses_id = vData['avatarSessionID']
-            _prebattleID = vData['prebattleID']
-            user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
-            if user is not None:
-                if databaseID != databID and not (user.isFriend() or user.isIgnored()):
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-            else:
-                if databaseID != databID:
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
+    for (vehicleID, vData) in getArena().vehicles.iteritems():
+        databaseID = vData['accountDBID']
+        av_ses_id = vData['avatarSessionID']
+        _prebattleID = vData['prebattleID']
+        user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
+        if user is not None:
+            if databaseID != databID and not (user.isFriend() or user.isIgnored()):
+                if prebID > 0 and prebID != _prebattleID:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+                elif prebID == 0:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+        else:
+            if databaseID != databID:
+                if prebID > 0 and prebID != _prebattleID:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+                elif prebID == 0:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
     check_running = False
 
 
@@ -234,12 +250,18 @@ def key_events_():
                 if check_running == False:
                     arty_key()
         elif _mod_toggle == mod_toggle['only HE']:
-            pass  # funktion auto HE einfügen
+            arena = getattr(BigWorld.player(), 'arena', None)
+            if arena is not None:
+                avatar2 = PlayerAvatar()
+                avatar2.onBattleEvents()
         elif _mod_toggle == mod_toggle['HE + teamBL']:
-            pass  # funktion auto HE einfügen
-            if isDown and mods == 4 and key == Keys.KEY_B:
-                if check_running == False:
-                    teambl_key()
+            arena = getattr(BigWorld.player(), 'arena', None)
+            if arena is not None:
+                avatar = PlayerAvatar()
+                avatar.onBattleEvents()
+                if isDown and mods == 4 and key == Keys.KEY_B:
+                    if check_running == False:
+                        teambl_key()
         old_handler(event)
         return
 
