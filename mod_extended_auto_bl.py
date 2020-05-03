@@ -79,6 +79,8 @@ def run_before(orig_func, func, *args, **kwargs):
 @run_before(PlayerAvatar, 'onBattleEvents')
 def before(self, events):
     global check_running
+    global mod_toggle
+    global _mod_toggle
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
         player = BigWorld.player()
@@ -96,8 +98,13 @@ def before(self, events):
                     extra = feedbackEvent.getExtra()
                     if extra:
                         if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
-                            if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
-                                id_list.append(str(target_id))
+                            if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
+                                if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
+                                    id_list.append(str(target_id))
+                            elif _mod_toggle == mod_toggle['only arty']:
+                                tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
+                                if VEHICLE_CLASS_NAME.SPG in tag_:
+                                    id_list.append(str(target_id))
         while len(id_list) > 0:
             check_running = True
             user = adding2.usersStorage.getUser(id_list[0], scope=UserEntityScope.BATTLE)
