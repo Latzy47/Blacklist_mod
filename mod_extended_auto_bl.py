@@ -254,14 +254,14 @@ def key_events_():
                 elif BigWorld.player():
                     sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
         if _mod_toggle == mod_toggle['only arty']:
-            #before()
+            before(events)
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if check_running == False:
                     arty_key()
         elif _mod_toggle == mod_toggle['only HE']:
-            #before()
+            before(events)
         elif _mod_toggle == mod_toggle['HE + teamBL']:
-            #before()
+            before(events)
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if check_running == False:
                     teambl_key()
