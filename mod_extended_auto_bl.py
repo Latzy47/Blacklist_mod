@@ -105,21 +105,22 @@ def before(events):
                                 tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
                                 if VEHICLE_CLASS_NAME.SPG in tag_:
                                     id_list.append(str(target_id))
-        while len(id_list) > 0:
-            check_running = True
-            user = adding2.usersStorage.getUser(id_list[0], scope=UserEntityScope.BATTLE)
-            if user is not None:
-                if not (user.isFriend() or user.isIgnored()):
+        if not check_running:
+            while len(id_list) > 0:
+                check_running = True
+                user = adding2.usersStorage.getUser(id_list[0], scope=UserEntityScope.BATTLE)
+                if user is not None:
+                    if not (user.isFriend() or user.isIgnored()):
+                        adding2.addBattleIgnored(id_list[0])
+                        id_list.pop(0)
+                        yield wait(1.1)
+                    else:
+                        id_list.pop(0)
+                else:
                     adding2.addBattleIgnored(id_list[0])
                     id_list.pop(0)
                     yield wait(1.1)
-                else:
-                    id_list.pop(0)
-            else:
-                adding2.addBattleIgnored(id_list[0])
-                id_list.pop(0)
-                yield wait(1.1)
-            check_running = False
+                check_running = False
 
 
 
@@ -151,13 +152,14 @@ def arty_key():
             tag = vData['vehicleType'].type.tags
             user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
             if user is not None:
-                if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag and not (user.isFriend() or user.isIgnored()):
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
+                if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag:
+                    if not (user.isFriend() or user.isIgnored()):
+                        if prebID > 0 and prebID != _prebattleID:
+                            adding.addBattleIgnored(av_ses_id)
+                            yield wait(1.1)
+                        elif prebID == 0:
+                            adding.addBattleIgnored(av_ses_id)
+                            yield wait(1.1)
             else:
                 if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag:
                     if prebID > 0 and prebID != _prebattleID:
@@ -254,16 +256,16 @@ def key_events_():
                 elif BigWorld.player():
                     sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
         if _mod_toggle == mod_toggle['only arty']:
-            before(events)
+            #before(events)
             if isDown and mods == 4 and key == Keys.KEY_B:
-                if check_running == False:
+                if not check_running:
                     arty_key()
         elif _mod_toggle == mod_toggle['only HE']:
-            before(events)
+            pass  # before(events)
         elif _mod_toggle == mod_toggle['HE + teamBL']:
-            before(events)
+            #before(events)
             if isDown and mods == 4 and key == Keys.KEY_B:
-                if check_running == False:
+                if not check_running:
                     teambl_key()
         old_handler(event)
         return
