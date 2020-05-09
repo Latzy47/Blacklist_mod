@@ -75,7 +75,7 @@ def run_before(orig_func, func, *args, **kwargs):
     finally:
         return orig_func(*args, **kwargs)
 
-@process
+
 @run_before(PlayerAvatar, 'onBattleEvents')
 def before(_, events):
     global check_running
@@ -101,28 +101,33 @@ def before(_, events):
                             if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
                                 if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
                                     id_list.append(str(target_id))
-                                    _logger.error('added HE')
                             elif _mod_toggle == mod_toggle['only arty']:
                                 tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
                                 if VEHICLE_CLASS_NAME.SPG in tag_:
                                     id_list.append(str(target_id))
-                                    _logger.error('added arty')
-        if not check_running:
-            while len(id_list) > 0:
+
+        @process
+        def HE_add(some_list):
+            global check_running
+            while len(some_list) > 0:
                 check_running = True
-                user = adding2.usersStorage.getUser(id_list[0], scope=UserEntityScope.BATTLE)
+                user = adding2.usersStorage.getUser(some_list[0], scope=UserEntityScope.BATTLE)
                 if user is not None:
                     if not (user.isFriend() or user.isIgnored()):
-                        adding2.addBattleIgnored(id_list[0])
-                        id_list.pop(0)
+                        adding2.addBattleIgnored(some_list[0])
+                        some_list.pop(0)
                         yield wait(1.1)
                     else:
-                        id_list.pop(0)
+                        some_list.pop(0)
                 else:
-                    adding2.addBattleIgnored(id_list[0])
-                    id_list.pop(0)
+                    adding2.addBattleIgnored(some_list[0])
+                    some_list.pop(0)
                     yield wait(1.1)
                 check_running = False
+
+        if not check_running and len(id_list) > 0:
+            HE_add(id_list)
+
 
 
 
