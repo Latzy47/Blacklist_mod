@@ -1,27 +1,30 @@
 # coding=utf-8
-import BigWorld, game
-import Keys
 import functools
+import inspect
+import logging
+import sys
+from functools import wraps
+
+import BigWorld
+import game
+
+import BattleReplay
+import Keys
+from Avatar import PlayerAvatar
+from BattleFeedbackCommon import BATTLE_EVENT_TYPE
+from adisp import async, process
+from avatar_helpers import getAvatarDatabaseID
+from debug_utils import LOG_CURRENT_EXCEPTION
 from gui import SystemMessages
 from gui.battle_control.avatar_getter import getArena
-from avatar_helpers import getAvatarDatabaseID
-from adisp import async, process
 from gui.battle_control.controllers import anonymizer_fakes_ctrl
-from gui.battle_control.controllers import repositories
 from gui.battle_control.controllers import feedback_events
-from helpers import dependency
-from skeletons.gui.battle_session import IBattleSessionProvider
-import BattleReplay
-from messenger.m_constants import UserEntityScope
-import logging
-from messenger import MessengerEntry
+from gui.battle_control.controllers import repositories
 from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
-from Avatar import PlayerAvatar
-from debug_utils import LOG_CURRENT_EXCEPTION
-import inspect
-from functools import wraps
-from BattleFeedbackCommon import BATTLE_EVENT_TYPE
-import sys
+from helpers import dependency
+from messenger import MessengerEntry
+from messenger.m_constants import UserEntityScope
+from skeletons.gui.battle_session import IBattleSessionProvider
 
 _logger = logging.getLogger(__name__)
 gui = MessengerEntry.g_instance.gui
@@ -40,7 +43,7 @@ class SHELL_TYPES(object):
     SMOKE = 'SMOKE'
 
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
-_mod_toggle = mod_toggle['HE + teamBL']  # [0,1,2,3] für [aus, only arty, only HE, HE + teamBL]
+_mod_toggle = mod_toggle['HE + teamBL']
 # mit Config Datei können Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
 
 check_running = False
