@@ -77,7 +77,7 @@ def run_before(orig_func, func, *args, **kwargs):
 
 @process
 @run_before(PlayerAvatar, 'onBattleEvents')
-def before(events):
+def before(_, events):
     global check_running
     global mod_toggle
     global _mod_toggle
