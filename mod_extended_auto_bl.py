@@ -101,10 +101,12 @@ def before(events):
                             if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
                                 if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
                                     id_list.append(str(target_id))
+                                    _logger.error('added HE')
                             elif _mod_toggle == mod_toggle['only arty']:
                                 tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
                                 if VEHICLE_CLASS_NAME.SPG in tag_:
                                     id_list.append(str(target_id))
+                                    _logger.error('added arty')
         if not check_running:
             while len(id_list) > 0:
                 check_running = True
@@ -256,14 +258,10 @@ def key_events_():
                 elif BigWorld.player():
                     sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
         if _mod_toggle == mod_toggle['only arty']:
-            #before(events)
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if not check_running:
                     arty_key()
-        elif _mod_toggle == mod_toggle['only HE']:
-            pass  # before(events)
         elif _mod_toggle == mod_toggle['HE + teamBL']:
-            #before(events)
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if not check_running:
                     teambl_key()
