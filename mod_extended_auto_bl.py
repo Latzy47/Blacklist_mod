@@ -1,15 +1,17 @@
 # coding=utf-8
 import functools
-import inspect
+import json
 import logging
 import sys
 from functools import wraps
 
 import BigWorld
-import game
 
 import BattleReplay
 import Keys
+import game
+import inspect
+import os
 from Avatar import PlayerAvatar
 from BattleFeedbackCommon import BATTLE_EVENT_TYPE
 from adisp import async, process
@@ -24,7 +26,14 @@ from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
 from helpers import dependency
 from messenger import MessengerEntry
 from messenger.m_constants import UserEntityScope
+from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
 from skeletons.gui.battle_session import IBattleSessionProvider
+
+if not os.path.exists('res_mods/configs'):
+    os.makedirs('res_mods/configs')
+else:
+    pass
+
 
 _logger = logging.getLogger(__name__)
 gui = MessengerEntry.g_instance.gui
@@ -34,6 +43,8 @@ DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
  BATTLE_EVENT_TYPE.DAMAGE,
  BATTLE_EVENT_TYPE.TANKING,
  BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
+
+
 class SHELL_TYPES(object):
     HOLLOW_CHARGE = 'HOLLOW_CHARGE'
     HIGH_EXPLOSIVE = 'HIGH_EXPLOSIVE'
@@ -42,11 +53,31 @@ class SHELL_TYPES(object):
     ARMOR_PIERCING_CR = 'ARMOR_PIERCING_CR'
     SMOKE = 'SMOKE'
 
-mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
-_mod_toggle = mod_toggle['HE + teamBL']
-# mit Config Datei können Zustände bleiben und sind nicht bei jedem Spielstart wieder auf Default
 
+mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 check_running = False
+config_data = {'mode': mod_toggle['HE + teamBL'], 'ignored': 1000000, 'friends': 1000000}
+
+
+def write_json():
+    global config_data
+    try:
+        with open('res_mods/configs/extended_auto_bl.json', 'w') as f1:
+            json.dump(config_data, f1, indent=2)
+    except (IOError, ValueError):
+        pass
+
+
+if os.path.exists('res_mods/configs/extended_auto_bl.json'):
+    with open('res_mods/configs/extended_auto_bl.json') as f:
+        config_data = json.load(f)
+else:
+    write_json()
+
+_mod_toggle = config_data['mode']
+CONTACT_LIMIT.ROSTER_MAX_COUNT = config_data['friends']
+CONTACT_LIMIT.BLOCK_MAX_COUNT = config_data['ignored']
+
 
 def hook(hook_handler):
     def build_decorator(module, func_name):
@@ -111,25 +142,25 @@ def before(_, events):
 
         @process
         def HE_add(some_list):
-            global check_running
             while len(some_list) > 0:
-                check_running = True
                 user = adding2.usersStorage.getUser(some_list[0], scope=UserEntityScope.BATTLE)
                 if user is not None:
                     if not (user.isFriend() or user.isIgnored()):
                         adding2.addBattleIgnored(some_list[0])
-                        some_list.pop(0)
                         yield wait(1.1)
+                        some_list.pop(0)
                     else:
                         some_list.pop(0)
                 else:
                     adding2.addBattleIgnored(some_list[0])
-                    some_list.pop(0)
                     yield wait(1.1)
-                check_running = False
+                    some_list.pop(0)
+
 
         if not check_running and len(id_list) > 0:
+            check_running = True
             HE_add(id_list)
+            check_running = False
 
 
 
@@ -233,6 +264,7 @@ def key_events_():
     old_handler = game.handleKeyEvent
 
     def new_handler(event):
+        global config_data
         global mod_toggle
         global check_running
         global _mod_toggle
@@ -242,24 +274,32 @@ def key_events_():
             if _mod_toggle > 3:
                 _mod_toggle = 0
             if _mod_toggle == mod_toggle['aus']:
+                config_data['mode'] = mod_toggle['aus']
+                write_json()
                 arena = getattr(BigWorld.player(), 'arena', None)
                 if arena is not None:
                     gui.addClientMessage('Mod disabled', True)
                 elif BigWorld.player():
                     sendMessage("Mod disabled", SystemMessages.SM_TYPE.Warning)
             elif _mod_toggle == mod_toggle['only arty']:
+                config_data['mode'] = mod_toggle['only arty']
+                write_json()
                 arena = getattr(BigWorld.player(), 'arena', None)
                 if arena is not None:
-                    gui.addClientMessage('Only Cancer', True)
+                    gui.addClientMessage('Only Arty', True)
                 elif BigWorld.player():
-                    sendMessage("Only Cancer", SystemMessages.SM_TYPE.Warning)
+                    sendMessage("Only Arty", SystemMessages.SM_TYPE.Warning)
             elif _mod_toggle == mod_toggle['only HE']:
+                config_data['mode'] = mod_toggle['only HE']
+                write_json()
                 arena = getattr(BigWorld.player(), 'arena', None)
                 if arena is not None:
                     gui.addClientMessage('Only HE', True)
                 elif BigWorld.player():
                     sendMessage("Only HE", SystemMessages.SM_TYPE.Warning)
             else:
+                config_data['mode'] = mod_toggle['HE + teamBL']
+                write_json()
                 arena = getattr(BigWorld.player(), 'arena', None)
                 if arena is not None:
                     gui.addClientMessage('HE + blacklist Teams', True)
