@@ -56,7 +56,7 @@ class SHELL_TYPES(object):
 
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 check_running = False
-config_data = {'mode': mod_toggle['HE + teamBL'], 'ignored': 1000000, 'friends': 1000000}
+config_data = {'mode': mod_toggle['HE + teamBL'], 'ignored': 1000000, 'friends': 1000000, 'extended': False}
 
 
 def write_json():
@@ -75,8 +75,8 @@ else:
     write_json()
 
 _mod_toggle = config_data['mode']
-CONTACT_LIMIT.ROSTER_MAX_COUNT = config_data['friends']
-CONTACT_LIMIT.BLOCK_MAX_COUNT = config_data['ignored']
+extended = config_data['extended']
+
 
 
 def hook(hook_handler):
@@ -112,9 +112,9 @@ def run_before(orig_func, func, *args, **kwargs):
 
 @run_before(PlayerAvatar, 'onBattleEvents')
 def before(_, events):
-    global check_running
     global mod_toggle
     global _mod_toggle
+    global check_running
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
         player = BigWorld.player()
@@ -134,11 +134,13 @@ def before(_, events):
                         if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
                             if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
                                 if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
-                                    id_list.append(str(target_id))
+                                    if str(target_id) != getAvatarDatabaseID():
+                                        id_list.append(str(target_id))
                             elif _mod_toggle == mod_toggle['only arty']:
                                 tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
                                 if VEHICLE_CLASS_NAME.SPG in tag_:
-                                    id_list.append(str(target_id))
+                                    if str(target_id) != getAvatarDatabaseID():
+                                        id_list.append(str(target_id))
 
         @process
         def HE_add(some_list):
@@ -156,14 +158,8 @@ def before(_, events):
                     yield wait(1.1)
                     some_list.pop(0)
 
-
-        if not check_running and len(id_list) > 0:
-            check_running = True
+        if len(id_list) > 0 and not check_running:
             HE_add(id_list)
-            check_running = False
-
-
-
 
 
 @async
@@ -209,6 +205,7 @@ def arty_key():
                     elif prebID == 0:
                         adding.addBattleIgnored(av_ses_id)
                         yield wait(1.1)
+        gui.addClientMessage('Blacklisted all artys', True)
     check_running = False
 
 @process
@@ -248,6 +245,7 @@ def teambl_key():
                     elif prebID == 0:
                         adding.addBattleIgnored(av_ses_id)
                         yield wait(1.1)
+        gui.addClientMessage('Blacklisted all players', True)
     check_running = False
 
 
@@ -268,6 +266,7 @@ def key_events_():
         global mod_toggle
         global check_running
         global _mod_toggle
+        global extended
         isDown, key, mods, isRepeat = game.convertKeyEvent(event)
         if isDown and mods == 4 and key == Keys.KEY_O:
             _mod_toggle += 1
@@ -313,6 +312,27 @@ def key_events_():
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if not check_running:
                     teambl_key()
+        if isDown and mods == 2 and key == Keys.KEY_O:
+            if not extended:
+                extended = True
+            elif extended:
+                extended = False
+            if not extended:
+                config_data['extended'] = False
+                write_json()
+                arena = getattr(BigWorld.player(), 'arena', None)
+                if arena is not None:
+                    gui.addClientMessage('Disabled extention', True)
+                elif BigWorld.player():
+                    sendMessage("Disabled extention", SystemMessages.SM_TYPE.Warning)
+            elif extended:
+                config_data['extended'] = True
+                write_json()
+                arena = getattr(BigWorld.player(), 'arena', None)
+                if arena is not None:
+                    gui.addClientMessage('Enabled extention', True)
+                elif BigWorld.player():
+                    sendMessage("Enabled extention", SystemMessages.SM_TYPE.Warning)
         old_handler(event)
         return
 
@@ -322,3 +342,6 @@ def key_events_():
 
 if not BattleReplay.isPlaying():
     key_events_()
+if extended:
+    CONTACT_LIMIT.ROSTER_MAX_COUNT = config_data['friends']
+    CONTACT_LIMIT.BLOCK_MAX_COUNT = config_data['ignored']
