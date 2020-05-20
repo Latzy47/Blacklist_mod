@@ -57,6 +57,7 @@ class SHELL_TYPES(object):
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 check_running = False
 config_data = {'mode': mod_toggle['HE + teamBL'], 'ignored': 1000000, 'friends': 1000000, 'extended': False}
+id_list = []
 
 
 def write_json():
@@ -77,6 +78,30 @@ else:
 _mod_toggle = config_data['mode']
 extended = config_data['extended']
 
+
+@process
+def HE_add():
+    global id_list
+    global check_running
+    if not check_running:
+        check_running = True
+        sessionProvider = dependency.instance(IBattleSessionProvider)
+        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+        adding2 = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+        while len(id_list) > 0:
+            user = adding2.usersStorage.getUser(id_list[0], scope=UserEntityScope.BATTLE)
+            if user is not None:
+                if not (user.isFriend() or user.isIgnored()):
+                    adding2.addBattleIgnored(id_list[0])
+                    yield wait(1.1)
+                    id_list.pop(0)
+                else:
+                    id_list.pop(0)
+            else:
+                adding2.addBattleIgnored(id_list[0])
+                yield wait(1.1)
+                id_list.pop(0)
+        check_running = False
 
 
 def hook(hook_handler):
@@ -115,14 +140,11 @@ def before(_, events):
     global mod_toggle
     global _mod_toggle
     global check_running
+    global id_list
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
         player = BigWorld.player()
         guiSessionProvider = player.guiSessionProvider
-        id_list = []
-        sessionProvider = dependency.instance(IBattleSessionProvider)
-        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-        adding2 = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
         if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
             for data in events:
                 feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
@@ -141,30 +163,13 @@ def before(_, events):
                                 if VEHICLE_CLASS_NAME.SPG in tag_:
                                     if str(target_id) != getAvatarDatabaseID():
                                         id_list.append(str(target_id))
-
-        @process
-        def HE_add(some_list):
-            while len(some_list) > 0:
-                user = adding2.usersStorage.getUser(some_list[0], scope=UserEntityScope.BATTLE)
-                if user is not None:
-                    if not (user.isFriend() or user.isIgnored()):
-                        adding2.addBattleIgnored(some_list[0])
-                        yield wait(1.1)
-                        some_list.pop(0)
-                    else:
-                        some_list.pop(0)
-                else:
-                    adding2.addBattleIgnored(some_list[0])
-                    yield wait(1.1)
-                    some_list.pop(0)
-
-        if len(id_list) > 0 and not check_running:
-            HE_add(id_list)
+                            BigWorld.callback(0, HE_add)
 
 
 @async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
+
 
 @process
 def arty_key():
@@ -207,6 +212,7 @@ def arty_key():
                         yield wait(1.1)
         gui.addClientMessage('Blacklisted all artys', True)
     check_running = False
+
 
 @process
 def teambl_key():
