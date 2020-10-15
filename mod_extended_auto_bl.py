@@ -1,12 +1,12 @@
-# coding=utf-8
+# Python bytecode 2.7 (decompiled from Python 2.7)
+# Embedded file name: mod_extended_auto_bl.py
+# Compiled at: 2020-05-20 07:08:18
 import functools
 import json
 import logging
 import sys
 from functools import wraps
-
 import BigWorld
-
 import BattleReplay
 import Keys
 import game
@@ -28,13 +28,8 @@ from messenger import MessengerEntry
 from messenger.m_constants import UserEntityScope
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
 from skeletons.gui.battle_session import IBattleSessionProvider
-
 if not os.path.exists('res_mods/configs'):
     os.makedirs('res_mods/configs')
-else:
-    pass
-
-
 _logger = logging.getLogger(__name__)
 gui = MessengerEntry.g_instance.gui
 DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
@@ -43,7 +38,6 @@ DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
  BATTLE_EVENT_TYPE.DAMAGE,
  BATTLE_EVENT_TYPE.TANKING,
  BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
-
 
 class SHELL_TYPES(object):
     HOLLOW_CHARGE = 'HOLLOW_CHARGE'
@@ -54,11 +48,16 @@ class SHELL_TYPES(object):
     SMOKE = 'SMOKE'
 
 
-mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
+mod_toggle = {'aus': 0,
+ 'only arty': 1,
+ 'only HE': 2,
+ 'HE + teamBL': 3}
 check_running = False
-config_data = {'mode': mod_toggle['HE + teamBL'], 'ignored': 1000000, 'friends': 1000000, 'extended': False}
+config_data = {'mode': mod_toggle['HE + teamBL'],
+ 'ignored': 1000000,
+ 'friends': 1000000,
+ 'extended': False}
 id_list = []
-
 
 def write_json():
     global config_data
@@ -74,10 +73,8 @@ if os.path.exists('res_mods/configs/extended_auto_bl.json'):
         config_data = json.load(f)
 else:
     write_json()
-
 _mod_toggle = config_data['mode']
 extended = config_data['extended']
-
 
 @process
 def HE_add():
@@ -97,15 +94,18 @@ def HE_add():
                     id_list.pop(0)
                 else:
                     id_list.pop(0)
-            else:
-                adding2.addBattleIgnored(id_list[0])
-                yield wait(1.1)
-                id_list.pop(0)
+            adding2.addBattleIgnored(id_list[0])
+            yield wait(1.1)
+            id_list.pop(0)
+
         check_running = False
+    return
 
 
 def hook(hook_handler):
+
     def build_decorator(module, func_name):
+
         def decorator(func):
             orig_func = getattr(module, func_name)
 
@@ -117,7 +117,6 @@ def hook(hook_handler):
                 setattr(sys.modules[module.__name__], func_name, func_wrapper)
             elif inspect.isclass(module):
                 setattr(module, func_name, func_wrapper)
-
             return func
 
         return decorator
@@ -128,9 +127,11 @@ def hook(hook_handler):
 @hook
 def run_before(orig_func, func, *args, **kwargs):
     try:
-        return func(*args, **kwargs)
-    except:
-        LOG_CURRENT_EXCEPTION()
+        try:
+            return func(*args, **kwargs)
+        except:
+            LOG_CURRENT_EXCEPTION()
+
     finally:
         return orig_func(*args, **kwargs)
 
@@ -139,8 +140,6 @@ def run_before(orig_func, func, *args, **kwargs):
 def before(_, events):
     global mod_toggle
     global _mod_toggle
-    global check_running
-    global id_list
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
         player = BigWorld.player()
@@ -165,10 +164,12 @@ def before(_, events):
                                         id_list.append(str(target_id))
                             BigWorld.callback(0, HE_add)
 
+    return
+
 
 @async
 def wait(seconds, callback):
-    BigWorld.callback(seconds, lambda: callback(None))
+    BigWorld.callback(seconds, lambda : callback(None))
 
 
 @process
@@ -182,12 +183,10 @@ def arty_key():
         setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
         adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
         databID = getAvatarDatabaseID()
-
         vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
         if vehID is not None and vehID in arena.vehicles:
             prebID = arena.vehicles[vehID]['prebattleID']
-
-        for (vehicleID, vData) in getArena().vehicles.iteritems():
+        for vehicleID, vData in getArena().vehicles.iteritems():
             databaseID = vData['accountDBID']
             av_ses_id = vData['avatarSessionID']
             _prebattleID = vData['prebattleID']
@@ -202,16 +201,17 @@ def arty_key():
                         elif prebID == 0:
                             adding.addBattleIgnored(av_ses_id)
                             yield wait(1.1)
-            else:
-                if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag:
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
+            if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag:
+                if prebID > 0 and prebID != _prebattleID:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+                elif prebID == 0:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+
         gui.addClientMessage('Blacklisted all artys', True)
     check_running = False
+    return
 
 
 @process
@@ -225,12 +225,10 @@ def teambl_key():
         setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
         adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
         databID = getAvatarDatabaseID()
-
         vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
         if vehID is not None and vehID in arena.vehicles:
             prebID = arena.vehicles[vehID]['prebattleID']
-
-        for (vehicleID, vData) in getArena().vehicles.iteritems():
+        for vehicleID, vData in getArena().vehicles.iteritems():
             databaseID = vData['accountDBID']
             av_ses_id = vData['avatarSessionID']
             _prebattleID = vData['prebattleID']
@@ -243,16 +241,17 @@ def teambl_key():
                     elif prebID == 0:
                         adding.addBattleIgnored(av_ses_id)
                         yield wait(1.1)
-            else:
-                if databaseID != databID:
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
+            if databaseID != databID:
+                if prebID > 0 and prebID != _prebattleID:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+                elif prebID == 0:
+                    adding.addBattleIgnored(av_ses_id)
+                    yield wait(1.1)
+
         gui.addClientMessage('Blacklisted all players', True)
     check_running = False
+    return
 
 
 def sendMessage(message, types):
@@ -263,14 +262,9 @@ def sendMessage(message, types):
 
 
 def key_events_():
-    global mod_toggle
-    global _mod_toggle
     old_handler = game.handleKeyEvent
 
     def new_handler(event):
-        global config_data
-        global mod_toggle
-        global check_running
         global _mod_toggle
         global extended
         isDown, key, mods, isRepeat = game.convertKeyEvent(event)
@@ -285,7 +279,7 @@ def key_events_():
                 if arena is not None:
                     gui.addClientMessage('Mod disabled', True)
                 elif BigWorld.player():
-                    sendMessage("Mod disabled", SystemMessages.SM_TYPE.Warning)
+                    sendMessage('Mod disabled', SystemMessages.SM_TYPE.Warning)
             elif _mod_toggle == mod_toggle['only arty']:
                 config_data['mode'] = mod_toggle['only arty']
                 write_json()
@@ -293,7 +287,7 @@ def key_events_():
                 if arena is not None:
                     gui.addClientMessage('Only Arty', True)
                 elif BigWorld.player():
-                    sendMessage("Only Arty", SystemMessages.SM_TYPE.Warning)
+                    sendMessage('Only Arty', SystemMessages.SM_TYPE.Warning)
             elif _mod_toggle == mod_toggle['only HE']:
                 config_data['mode'] = mod_toggle['only HE']
                 write_json()
@@ -301,7 +295,7 @@ def key_events_():
                 if arena is not None:
                     gui.addClientMessage('Only HE', True)
                 elif BigWorld.player():
-                    sendMessage("Only HE", SystemMessages.SM_TYPE.Warning)
+                    sendMessage('Only HE', SystemMessages.SM_TYPE.Warning)
             else:
                 config_data['mode'] = mod_toggle['HE + teamBL']
                 write_json()
@@ -309,7 +303,7 @@ def key_events_():
                 if arena is not None:
                     gui.addClientMessage('HE + blacklist Teams', True)
                 elif BigWorld.player():
-                    sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
+                    sendMessage('HE + blacklist Teams', SystemMessages.SM_TYPE.Warning)
         if _mod_toggle == mod_toggle['only arty']:
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if not check_running:
@@ -330,7 +324,7 @@ def key_events_():
                 if arena is not None:
                     gui.addClientMessage('Disabled extention', True)
                 elif BigWorld.player():
-                    sendMessage("Disabled extention", SystemMessages.SM_TYPE.Warning)
+                    sendMessage('Disabled extention', SystemMessages.SM_TYPE.Warning)
             elif extended:
                 config_data['extended'] = True
                 write_json()
@@ -338,12 +332,11 @@ def key_events_():
                 if arena is not None:
                     gui.addClientMessage('Enabled extention', True)
                 elif BigWorld.player():
-                    sendMessage("Enabled extention", SystemMessages.SM_TYPE.Warning)
+                    sendMessage('Enabled extention', SystemMessages.SM_TYPE.Warning)
         old_handler(event)
         return
 
     game.handleKeyEvent = new_handler
-    return
 
 
 if not BattleReplay.isPlaying():
