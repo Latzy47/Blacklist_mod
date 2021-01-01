@@ -255,11 +255,19 @@ def teambl_key():
     check_running = False
 
 
-def sendMessage(message, types):
+def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
     if BigWorld.player():
         SystemMessages.pushMessage(message, types)
     else:
         BigWorld.callback(1, functools.partial(sendMessage, message, types))
+
+
+def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning):
+    arena = getattr(BigWorld.player(), 'arena', None)
+    if arena is not None:
+        gui.addClientMessage(message, isCurrentPlayer=True)
+    elif BigWorld.player():
+        sendMessage(message, types=types)
 
 
 def key_events_():
@@ -281,35 +289,19 @@ def key_events_():
             if _mod_toggle == mod_toggle['aus']:
                 config_data['mode'] = mod_toggle['aus']
                 write_json()
-                arena = getattr(BigWorld.player(), 'arena', None)
-                if arena is not None:
-                    gui.addClientMessage('Mod disabled', True)
-                elif BigWorld.player():
-                    sendMessage("Mod disabled", SystemMessages.SM_TYPE.Warning)
+                SendGuiMessage("Mod disabled")
             elif _mod_toggle == mod_toggle['only arty']:
                 config_data['mode'] = mod_toggle['only arty']
                 write_json()
-                arena = getattr(BigWorld.player(), 'arena', None)
-                if arena is not None:
-                    gui.addClientMessage('Only Arty', True)
-                elif BigWorld.player():
-                    sendMessage("Only Arty", SystemMessages.SM_TYPE.Warning)
+                SendGuiMessage("Only Arty")
             elif _mod_toggle == mod_toggle['only HE']:
                 config_data['mode'] = mod_toggle['only HE']
                 write_json()
-                arena = getattr(BigWorld.player(), 'arena', None)
-                if arena is not None:
-                    gui.addClientMessage('Only HE', True)
-                elif BigWorld.player():
-                    sendMessage("Only HE", SystemMessages.SM_TYPE.Warning)
+                SendGuiMessage("Only HE")
             else:
                 config_data['mode'] = mod_toggle['HE + teamBL']
                 write_json()
-                arena = getattr(BigWorld.player(), 'arena', None)
-                if arena is not None:
-                    gui.addClientMessage('HE + blacklist Teams', True)
-                elif BigWorld.player():
-                    sendMessage("HE + blacklist Teams", SystemMessages.SM_TYPE.Warning)
+                SendGuiMessage("HE + blacklist Teams")
         if _mod_toggle == mod_toggle['only arty']:
             if isDown and mods == 4 and key == Keys.KEY_B:
                 if not check_running:
@@ -326,19 +318,11 @@ def key_events_():
             if not extended:
                 config_data['extended'] = False
                 write_json()
-                arena = getattr(BigWorld.player(), 'arena', None)
-                if arena is not None:
-                    gui.addClientMessage('Disabled extention', True)
-                elif BigWorld.player():
-                    sendMessage("Disabled extention", SystemMessages.SM_TYPE.Warning)
+                SendGuiMessage("Disabled extention")
             elif extended:
                 config_data['extended'] = True
                 write_json()
-                arena = getattr(BigWorld.player(), 'arena', None)
-                if arena is not None:
-                    gui.addClientMessage('Enabled extention', True)
-                elif BigWorld.player():
-                    sendMessage("Enabled extention", SystemMessages.SM_TYPE.Warning)
+                SendGuiMessage("Enabled extention")
         old_handler(event)
         return
 
