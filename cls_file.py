@@ -27,6 +27,10 @@ class GlobalCls(object):
     all_modes = []
     active_idx = 0
     active_mode = all_modes[active_idx] if all_modes else None
+    ignored = 1000000
+    friends = 1000000
+    extended = False
+    config_data = {}
 
     @staticmethod
     def increment_mode():

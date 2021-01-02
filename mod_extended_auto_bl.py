@@ -22,20 +22,18 @@ from gui.battle_control.avatar_getter import getArena
 from gui.battle_control.controllers import anonymizer_fakes_ctrl
 from gui.battle_control.controllers import feedback_events
 from gui.battle_control.controllers import repositories
-from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
 from helpers import dependency
 from messenger import MessengerEntry
 from messenger.m_constants import UserEntityScope
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
 from skeletons.gui.battle_session import IBattleSessionProvider
+from cls_file import *
 
 if not os.path.exists('res_mods/configs'):
     os.makedirs('res_mods/configs')
-else:
-    pass
 
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)  # _logger.error(msg)
 gui = MessengerEntry.g_instance.gui
 DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
  BATTLE_EVENT_TYPE.TRACK_ASSIST,
@@ -155,7 +153,7 @@ def before(_, events):
                     if extra:
                         if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
                             if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
-                                if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:
+                                if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:  # isShellGold()
                                     if str(target_id) != getAvatarDatabaseID():
                                         id_list.append(str(target_id))
                             elif _mod_toggle == mod_toggle['only arty']:
@@ -270,12 +268,9 @@ def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning):
         sendMessage(message, types=types)
 
 
-def key_events_():
-    global mod_toggle
-    global _mod_toggle
-    old_handler = game.handleKeyEvent
-
-    def new_handler(event):
+@run_before(game, 'handleKeyEvent')
+def new_handler(event):
+    if not BattleReplay.isPlaying():
         global config_data
         global mod_toggle
         global check_running
@@ -323,15 +318,8 @@ def key_events_():
                 config_data['extended'] = True
                 write_json()
                 SendGuiMessage("Enabled extention")
-        old_handler(event)
-        return
-
-    game.handleKeyEvent = new_handler
-    return
 
 
-if not BattleReplay.isPlaying():
-    key_events_()
 if extended:
     CONTACT_LIMIT.ROSTER_MAX_COUNT = config_data['friends']
     CONTACT_LIMIT.BLOCK_MAX_COUNT = config_data['ignored']
