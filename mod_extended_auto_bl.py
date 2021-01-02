@@ -154,12 +154,12 @@ def before(_, events):
                         if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
                             if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
                                 if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:  # isShellGold()
-                                    if str(target_id) != getAvatarDatabaseID():
+                                    if target_id != BigWorld.player().playerVehicleID:
                                         id_list.append(str(target_id))
                             elif _mod_toggle == mod_toggle['only arty']:
                                 tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
                                 if VEHICLE_CLASS_NAME.SPG in tag_:
-                                    if str(target_id) != getAvatarDatabaseID():
+                                    if target_id != BigWorld.player().playerVehicleID:
                                         id_list.append(str(target_id))
                             BigWorld.callback(0, HE_add)
 
