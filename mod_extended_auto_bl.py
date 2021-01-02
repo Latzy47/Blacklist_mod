@@ -26,6 +26,9 @@ from helpers import dependency
 from messenger import MessengerEntry
 from messenger.m_constants import UserEntityScope
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
+from messenger.proto.xmpp.contacts import ContactsManager
+from messenger.proto.xmpp.xmpp_constants import XMPP_ITEM_TYPE
+from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
 from skeletons.gui.battle_session import IBattleSessionProvider
 from cls_file import *
 
@@ -323,3 +326,9 @@ def new_handler(event):
 if extended:
     CONTACT_LIMIT.ROSTER_MAX_COUNT = config_data['friends']
     CONTACT_LIMIT.BLOCK_MAX_COUNT = config_data['ignored']
+# test = ContactsManager()
+# all_users = test.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+# test.removeIgnored(502215039, False)
+# for contact in all_users:
+#     test.removeIgnored(contact.getID(), False)
+#     wait(1.1)
