@@ -209,8 +209,8 @@ def clear_blacklist():
             yield wait(1.1)
             if idx % 500 == 0:
                 users_left = len(all_users) - idx
-                SendGuiMessage('There is '+str(datetime.timedelta(seconds=users_left*1.1))+' left!')
-        if idx < len(all_users):
+                SendGuiMessage('There is '+str(datetime.timedelta(seconds=round(users_left*1.1)))+' left!')
+        if idx == len(all_users)-1:
             SendGuiMessage('Cleared your blacklist!')
         global_vars.check_running = False
 
@@ -253,7 +253,7 @@ def new_handler(event):
             elif global_vars.enable_clear:
                 contactsForTime = ContactsManager()
                 all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=len(all_bl_users)*1.1))))
+                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=round(len(all_bl_users)*1.1)))))
         elif isDown and mods == 4 and key == Keys.KEY_X:
             if global_vars.enable_clear:
                 clear_blacklist()
