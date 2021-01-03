@@ -24,6 +24,7 @@ class GlobalVars(object):
         self.config_data = {}
         self.check_running = False
         self.id_list = []
+        self.enable_clear = False
 
     def increment_mode(self):
         if self.active_mode is not None:
@@ -69,6 +70,12 @@ class GlobalVars(object):
             self.extended = False
         self.updateConfigData()
         self.updateJsonWithConfigData()
+
+    def toggle_enable_clear(self):
+        if not self.enable_clear:
+            self.enable_clear = True
+        elif self.enable_clear:
+            self.enable_clear = False
 
 
 class SchematicForMode(object):

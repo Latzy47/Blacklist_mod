@@ -3,7 +3,7 @@ import functools
 import logging
 import sys
 from functools import wraps
-
+import datetime
 import BigWorld
 
 import BattleReplay
@@ -151,7 +151,6 @@ def pressed_key():
                 prebID = arena.vehicles[vehID]['prebattleID']
 
             for (vehicleID, vData) in getArena().vehicles.iteritems():
-                _logger.error('test-------------')
                 databaseID = vData['accountDBID']
                 av_ses_id = vData['avatarSessionID']
                 _prebattleID = vData['prebattleID']
@@ -192,22 +191,28 @@ def pressed_key():
                             elif prebID == 0:
                                 adding.addBattleIgnored(av_ses_id)
                                 yield wait(1.1)
-            gui.addClientMessage('Blacklisting finished!', True)
+            SendGuiMessage('Blacklisting finished!')
     global_vars.check_running = False
 
 
 @process
 def clear_blacklist():
-    # TODO: handle lobby
-    # TODO: vor dem Aufruf Zeitangabe
-    blacklisted_contacts = ContactsManager()
-    all_users = blacklisted_contacts.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-    for idx, contact in enumerate(all_users, start=1):
-        blacklisted_contacts.removeIgnored(contact.getID(), False)
-        yield wait(1.1)
-        if idx % 500 == 0:
-            users_left = len(all_users) - idx
-            # TODO: handle timestamp
+    arena = getattr(BigWorld.player(), 'arena', None)
+    if arena is None and not global_vars.check_running:
+        global_vars.check_running = True
+        blacklisted_contacts = ContactsManager()
+        all_users = blacklisted_contacts.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+        idx = 0
+        while idx < len(all_users) and global_vars.enable_clear:
+            blacklisted_contacts.removeIgnored(all_users[idx].getID(), False)
+            idx += 1
+            yield wait(1.1)
+            if idx % 500 == 0:
+                users_left = len(all_users) - idx
+                SendGuiMessage('There is '+str(datetime.timedelta(seconds=users_left*1.1))+' left!')
+        if idx < len(all_users):
+            SendGuiMessage('Cleared your blacklist!')
+        global_vars.check_running = False
 
 
 def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
@@ -232,15 +237,26 @@ def new_handler(event):
         if isDown and mods == 4 and key == Keys.KEY_O:
             global_vars.increment_mode()
             SendGuiMessage(global_vars.active_mode.name)  # maybe handle empty list
-        if isDown and mods == 4 and key == Keys.KEY_B:
+        elif isDown and mods == 4 and key == Keys.KEY_B:
             if not global_vars.check_running:
                 pressed_key()
-        if isDown and mods == 2 and key == Keys.KEY_O:
+        elif isDown and mods == 2 and key == Keys.KEY_O:
             global_vars.toggle_extended()
             if not global_vars.extended:
                 SendGuiMessage("Disabled extention")
             elif global_vars.extended:
                 SendGuiMessage("Enabled extention")
+        elif isDown and mods == 4 and key == Keys.KEY_C:
+            global_vars.toggle_enable_clear()
+            if not global_vars.enable_clear:
+                SendGuiMessage("Disabled clearing your blacklist!")
+            elif global_vars.enable_clear:
+                contactsForTime = ContactsManager()
+                all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=len(all_bl_users)*1.1))))
+        elif isDown and mods == 4 and key == Keys.KEY_X:
+            if global_vars.enable_clear:
+                clear_blacklist()
 
 
 if global_vars.extended:
