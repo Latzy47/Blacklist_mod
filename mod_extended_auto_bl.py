@@ -151,6 +151,7 @@ def pressed_key():
                 prebID = arena.vehicles[vehID]['prebattleID']
 
             for (vehicleID, vData) in getArena().vehicles.iteritems():
+                _logger.error('test-------------')
                 databaseID = vData['accountDBID']
                 av_ses_id = vData['avatarSessionID']
                 _prebattleID = vData['prebattleID']

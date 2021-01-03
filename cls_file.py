@@ -77,13 +77,15 @@ class SchematicForMode(object):
 
     def __init__(self, name='', shell_AP=None, shell_APCR=None, shell_HEAT=None,
                  shell_HE=None, random=ARENA_BONUS_TYPE.REGULAR, random_key=ARENA_BONUS_TYPE.REGULAR,
-                 other_modes=None, other_modes_key=None, light=None, light_key=None,
+                 other_modes=(None,), other_modes_key=(None,), light=None, light_key=None,
                  med=None, med_key=None, heavy=None, heavy_key=None, td=None, td_key=None, spg=None,
                  spg_key=None, tanklist=None):
         self.name = name
         self.shell_list = {shell_AP, shell_APCR, shell_HEAT, shell_HE}
-        self.auto_mode = {random, other_modes}  # other_modes must be tuple
-        self.key_mode = {random_key, other_modes_key}
+        self.auto_mode = {random}
+        self.auto_mode.update(other_modes)
+        self.key_mode = {random_key}
+        self.key_mode.update(other_modes_key)
         self.tank_cls = {light, med, heavy, td, spg}
         self.tank_cls_key = {light_key, med_key, heavy_key, td_key, spg_key}
         self.tanklist = tanklist
