@@ -49,7 +49,7 @@ global_vars.loadJson()
 
 
 @process
-def HE_add():
+def AUTO_add():
     if not global_vars.check_running:
         global_vars.check_running = True
         sessionProvider = dependency.instance(IBattleSessionProvider)
@@ -106,27 +106,27 @@ def run_before(orig_func, func, *args, **kwargs):
 def before(_, events):
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
-        player = BigWorld.player()
-        guiSessionProvider = player.guiSessionProvider
-        if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
-            for data in events:
-                feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
-                eventType = feedbackEvent.getBattleEventType()
-                target_id = feedbackEvent.getTargetID()
-                if eventType in DAMAGE_EVENTS:
-                    extra = feedbackEvent.getExtra()
-                    if extra:
-                        if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
-                            if _mod_toggle == mod_toggle['HE + teamBL'] or _mod_toggle == mod_toggle['only HE']:
-                                if extra.getShellType() == SHELL_TYPES.HIGH_EXPLOSIVE:  # isShellGold()
+        if arena.bonusType in global_vars.active_mode.auto_mode:
+            player = BigWorld.player()
+            guiSessionProvider = player.guiSessionProvider
+            if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
+                for data in events:
+                    feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
+                    eventType = feedbackEvent.getBattleEventType()
+                    target_id = feedbackEvent.getTargetID()
+                    if eventType in DAMAGE_EVENTS:
+                        extra = feedbackEvent.getExtra()
+                        if extra:
+                            if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
+                                if extra.getShellType() in global_vars.active_mode.shell_list:  # isShellGold()
                                     if target_id != BigWorld.player().playerVehicleID:
-                                        id_list.append(str(target_id))
-                            elif _mod_toggle == mod_toggle['only arty']:
-                                tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
-                                if VEHICLE_CLASS_NAME.SPG in tag_:
-                                    if target_id != BigWorld.player().playerVehicleID:
-                                        id_list.append(str(target_id))
-                            BigWorld.callback(0, HE_add)
+                                        global_vars.id_list.append(str(target_id))
+                                elif global_vars.active_mode.tank_cls:
+                                    tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
+                                    if global_vars.active_mode.tank_cls & tag_:
+                                        if target_id != BigWorld.player().playerVehicleID:
+                                            global_vars.id_list.append(str(target_id))
+                                BigWorld.callback(0, AUTO_add)
 
 
 @async
@@ -140,80 +140,59 @@ def pressed_key():
     global_vars.check_running = True
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
-        sessionProvider = dependency.instance(IBattleSessionProvider)
-        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-        adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-        databID = getAvatarDatabaseID()
+        if arena.bonusType in global_vars.active_mode.key_mode:
+            sessionProvider = dependency.instance(IBattleSessionProvider)
+            setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+            adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+            databID = getAvatarDatabaseID()
 
-        vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
-        if vehID is not None and vehID in arena.vehicles:
-            prebID = arena.vehicles[vehID]['prebattleID']
+            vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
+            if vehID is not None and vehID in arena.vehicles:
+                prebID = arena.vehicles[vehID]['prebattleID']
 
-        for (vehicleID, vData) in getArena().vehicles.iteritems():
-            databaseID = vData['accountDBID']
-            av_ses_id = vData['avatarSessionID']
-            _prebattleID = vData['prebattleID']
-            tag = vData['vehicleType'].type.tags
-            user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
-            if user is not None:
-                if databaseID != databID and global_vars.active_mode.tank_cls_key in tag:
-                    if not (user.isFriend() or user.isIgnored()):
-                        if prebID > 0 and prebID != _prebattleID:
-                            adding.addBattleIgnored(av_ses_id)
-                            yield wait(1.1)
-                        elif prebID == 0:
-                            adding.addBattleIgnored(av_ses_id)
-                            yield wait(1.1)
-            else:
-                if databaseID != databID and VEHICLE_CLASS_NAME.SPG in tag:
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-        gui.addClientMessage('Blacklisted all artys', True)
+            for (vehicleID, vData) in getArena().vehicles.iteritems():
+                databaseID = vData['accountDBID']
+                av_ses_id = vData['avatarSessionID']
+                _prebattleID = vData['prebattleID']
+                tag = vData['vehicleType'].type.tags  # frozenset
+                user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
+                if user is not None:
+                    if global_vars.active_mode.tank_cls_key:
+                        if databaseID != databID and global_vars.active_mode.tank_cls_key & tag:
+                            if not (user.isFriend() or user.isIgnored()):
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                    else:
+                        if databaseID != databID and not (user.isFriend() or user.isIgnored()):
+                            if prebID > 0 and prebID != _prebattleID:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                            elif prebID == 0:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                else:
+                    if global_vars.active_mode.tank_cls_key:
+                        if databaseID != databID and global_vars.active_mode.tank_cls_key & tag:
+                            if prebID > 0 and prebID != _prebattleID:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                            elif prebID == 0:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                    else:
+                        if databaseID != databID:
+                            if prebID > 0 and prebID != _prebattleID:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                            elif prebID == 0:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+            gui.addClientMessage('Blacklisting finished!', True)
     global_vars.check_running = False
-
-
-@process
-def teambl_key():
-    prebID = 0
-    check_running = True
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        sessionProvider = dependency.instance(IBattleSessionProvider)
-        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-        adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-        databID = getAvatarDatabaseID()
-
-        vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
-        if vehID is not None and vehID in arena.vehicles:
-            prebID = arena.vehicles[vehID]['prebattleID']
-
-        for (vehicleID, vData) in getArena().vehicles.iteritems():
-            databaseID = vData['accountDBID']
-            av_ses_id = vData['avatarSessionID']
-            _prebattleID = vData['prebattleID']
-            user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
-            if user is not None:
-                if databaseID != databID and not (user.isFriend() or user.isIgnored()):
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-            else:
-                if databaseID != databID:
-                    if prebID > 0 and prebID != _prebattleID:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-                    elif prebID == 0:
-                        adding.addBattleIgnored(av_ses_id)
-                        yield wait(1.1)
-        gui.addClientMessage('Blacklisted all players', True)
-    check_running = False
 
 
 @process
@@ -266,4 +245,3 @@ def new_handler(event):
 if global_vars.extended:
     CONTACT_LIMIT.ROSTER_MAX_COUNT = global_vars.friends
     CONTACT_LIMIT.BLOCK_MAX_COUNT = global_vars.ignored
-

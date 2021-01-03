@@ -88,6 +88,13 @@ class SchematicForMode(object):
         self.tank_cls_key = {light_key, med_key, heavy_key, td_key, spg_key}
         self.tanklist = tanklist
 
+    def removeNone(self):
+        self.shell_list.discard(None)
+        self.auto_mode.discard(None)
+        self.key_mode.discard(None)
+        self.tank_cls.discard(None)
+        self.tank_cls_key.discard(None)
+
 
 def std_name(all_modes):
     if all_modes:
@@ -103,11 +110,15 @@ def std_name(all_modes):
 
 global_vars = GlobalVars()
 disabled_mode = SchematicForMode(name='Mod disabled', random=None, random_key=None)
+disabled_mode.removeNone()
 arty_mode = SchematicForMode(name='Only arty', other_modes=SchematicForMode.other_game_modes,
                              other_modes_key=SchematicForMode.other_game_modes, spg=VEHICLE_CLASS_NAME.SPG,
                              spg_key=VEHICLE_CLASS_NAME.SPG)
+arty_mode.removeNone()
 he_mode = SchematicForMode(name='Only HE', shell_HE=SHELL_TYPES.HIGH_EXPLOSIVE, random_key=None,
                            other_modes=SchematicForMode.other_game_modes)
+he_mode.removeNone()
 he_bl_mode = SchematicForMode(name='HE + blacklist teams', shell_HE=SHELL_TYPES.HIGH_EXPLOSIVE,
                               other_modes=SchematicForMode.other_game_modes,
                               other_modes_key=SchematicForMode.other_game_modes)
+he_bl_mode.removeNone()
