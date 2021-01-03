@@ -46,15 +46,6 @@ DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
  BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
 
 
-class SHELL_TYPES(object):
-    HOLLOW_CHARGE = 'HOLLOW_CHARGE'
-    HIGH_EXPLOSIVE = 'HIGH_EXPLOSIVE'
-    ARMOR_PIERCING = 'ARMOR_PIERCING'
-    ARMOR_PIERCING_HE = 'ARMOR_PIERCING_HE'
-    ARMOR_PIERCING_CR = 'ARMOR_PIERCING_CR'
-    SMOKE = 'SMOKE'
-
-
 mod_toggle = {'aus': 0, 'only arty': 1, 'only HE': 2, 'HE + teamBL': 3}
 check_running = False
 config_data = {'mode': mod_toggle['HE + teamBL'], 'ignored': 1000000, 'friends': 1000000, 'extended': False}
@@ -256,6 +247,20 @@ def teambl_key():
     check_running = False
 
 
+@process
+def clear_blacklist():
+    # TODO: handle lobby
+    # TODO: vor dem Aufruf Zeitangabe
+    blacklisted_contacts = ContactsManager()
+    all_users = blacklisted_contacts.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+    for idx, contact in enumerate(all_users, start=1):
+        blacklisted_contacts.removeIgnored(contact.getID(), False)
+        yield wait(1.1)
+        if idx % 500 == 0:
+            users_left = len(all_users) - idx
+            # TODO: handle timestamp
+
+
 def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
     if BigWorld.player():
         SystemMessages.pushMessage(message, types)
@@ -326,9 +331,4 @@ def new_handler(event):
 if extended:
     CONTACT_LIMIT.ROSTER_MAX_COUNT = config_data['friends']
     CONTACT_LIMIT.BLOCK_MAX_COUNT = config_data['ignored']
-# test = ContactsManager()
-# all_users = test.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-# test.removeIgnored(502215039, False)
-# for contact in all_users:
-#     test.removeIgnored(contact.getID(), False)
-#     wait(1.1)
+
