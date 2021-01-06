@@ -12,7 +12,44 @@ from helpers import dependency
 from messenger.m_constants import UserEntityScope
 from skeletons.gui.battle_session import IBattleSessionProvider
 import logging
+from functools import wraps
+import inspect
+import sys
+from debug_utils import LOG_CURRENT_EXCEPTION
+from Avatar import PlayerAvatar
 _logger = logging.getLogger(__name__)
+
+
+def hook(hook_handler):
+    def build_decorator(module, func_name):
+        def decorator(func):
+            orig_func = getattr(module, func_name)
+
+            @wraps(orig_func)
+            def func_wrapper(*args, **kwargs):
+                return hook_handler(orig_func, func, *args, **kwargs)
+
+            if inspect.ismodule(module):
+                setattr(sys.modules[module.__name__], func_name, func_wrapper)
+            elif inspect.isclass(module):
+                setattr(module, func_name, func_wrapper)
+
+            return func
+
+        return decorator
+
+    return build_decorator
+
+
+@hook
+def run_before(orig_func, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except:
+        LOG_CURRENT_EXCEPTION()
+    finally:
+        return orig_func(*args, **kwargs)
+
 
 @async
 def wait(seconds, callback):
@@ -23,11 +60,8 @@ def wait(seconds, callback):
 def teambl_key():
     prebID = 0
     arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        if arena.bonusType != 1:
-            BigWorld.callback(100.0, teambl_key)
-        else:
-            yield wait(30.0)
+    if arena is not None and not BattleReplay.isPlaying():
+        if arena.bonusType == 1:
             sessionProvider = dependency.instance(IBattleSessionProvider)
             setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
             adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
@@ -58,10 +92,10 @@ def teambl_key():
                         elif prebID == 0:
                             adding.addBattleIgnored(av_ses_id)
                             yield wait(1.1)
-            BigWorld.callback(10.0, teambl_key)
-    else:
-        BigWorld.callback(10.0, teambl_key)
 
 
-if not BattleReplay.isPlaying():
-    teambl_key()
+@run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
+def test(_, period, __, ___, ____):
+    _logger.error('#######################################')
+    if period == 3:
+        teambl_key()
