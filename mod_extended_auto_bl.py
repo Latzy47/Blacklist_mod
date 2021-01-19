@@ -28,7 +28,7 @@ from messenger.proto.xmpp.contacts import ContactsManager
 from messenger.proto.xmpp.xmpp_constants import XMPP_ITEM_TYPE
 from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
 from skeletons.gui.battle_session import IBattleSessionProvider
-from cls_file import *
+from extended_auto_bl_core import *
 
 if not os.path.exists('res_mods/configs'):
     os.makedirs('res_mods/configs')

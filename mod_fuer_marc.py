@@ -96,6 +96,5 @@ def teambl_key():
 
 @run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
 def test(_, period, __, ___, ____):
-    _logger.error('#######################################')
     if period == 3:
         teambl_key()
