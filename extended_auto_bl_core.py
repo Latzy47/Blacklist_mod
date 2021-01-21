@@ -25,6 +25,69 @@ class GlobalVars(object):
         self.check_running = False
         self.id_list = []
         self.enable_clear = False
+        self.mode_data = {'mode0': {'name': 'Mod disabled', 'shell_AP': False, 'shell_APCR': False,
+                                    'shell_HEAT': False, 'shell_HE': False, 'random': False,
+                                    'random_key': False, 'other_modes': False, 'other_modes_key': False,
+                                    'light': False, 'light_key': False, 'med': False, 'med_key': False,
+                                    'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
+                                    'spg': False, 'spg_key': False, 'tanklist': None},
+                          'mode1': {'name': 'Only arty', 'shell_AP': False, 'shell_APCR': False,
+                                    'shell_HEAT': False, 'shell_HE': False, 'random': True,
+                                    'random_key': True, 'other_modes': True, 'other_modes_key': True,
+                                    'light': False, 'light_key': False, 'med': False, 'med_key': False,
+                                    'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
+                                    'spg': True, 'spg_key': True, 'tanklist': None},
+                          'mode2': {'name': 'Only HE', 'shell_AP': False, 'shell_APCR': False,
+                                    'shell_HEAT': False, 'shell_HE': True, 'random': True,
+                                    'random_key': False, 'other_modes': True, 'other_modes_key': False,
+                                    'light': False, 'light_key': False, 'med': False, 'med_key': False,
+                                    'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
+                                    'spg': False, 'spg_key': False, 'tanklist': None},
+                          'mode3': {'name': 'HE + blacklist teams', 'shell_AP': False, 'shell_APCR': False,
+                                    'shell_HEAT': False, 'shell_HE': True, 'random': True,
+                                    'random_key': True, 'other_modes': True, 'other_modes_key': True,
+                                    'light': False, 'light_key': False, 'med': False, 'med_key': False,
+                                    'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
+                                    'spg': False, 'spg_key': False, 'tanklist': None}}
+
+    def convert_to_schematic(self):
+        mode_lst = [{}, {}, {}, {}]
+        for mode, key in zip(mode_lst, self.mode_data.values()):
+            mode['name'] = key['name']
+            mode['shell_AP'] = None if not key['shell_AP'] else SHELL_TYPES.ARMOR_PIERCING
+            mode['shell_APCR'] = None if not key['shell_APCR'] else SHELL_TYPES.ARMOR_PIERCING_CR
+            mode['shell_HEAT'] = None if not key['shell_HEAT'] else SHELL_TYPES.HOLLOW_CHARGE
+            mode['shell_HE'] = None if not key['shell_HE'] else SHELL_TYPES.HIGH_EXPLOSIVE
+            mode['random'] = None if not key['random'] else ARENA_BONUS_TYPE.REGULAR
+            mode['random_key'] = None if not key['random_key'] else ARENA_BONUS_TYPE.REGULAR
+            mode['other_modes'] = (None,) if not key['other_modes'] else SchematicForMode.other_game_modes
+            mode['other_modes_key'] = (None,) if not key['other_modes_key'] else SchematicForMode.other_game_modes
+            mode['light'] = None if not key['light'] else VEHICLE_CLASS_NAME.LIGHT_TANK
+            mode['light_key'] = None if not key['light_key'] else VEHICLE_CLASS_NAME.LIGHT_TANK
+            mode['med'] = None if not key['med'] else VEHICLE_CLASS_NAME.MEDIUM_TANK
+            mode['med_key'] = None if not key['med_key'] else VEHICLE_CLASS_NAME.MEDIUM_TANK
+            mode['heavy'] = None if not key['heavy'] else VEHICLE_CLASS_NAME.HEAVY_TANK
+            mode['heavy_key'] = None if not key['heavy_key'] else VEHICLE_CLASS_NAME.HEAVY_TANK
+            mode['td'] = None if not key['td'] else VEHICLE_CLASS_NAME.AT_SPG
+            mode['td_key'] = None if not key['td_key'] else VEHICLE_CLASS_NAME.AT_SPG
+            mode['spg'] = None if not key['spg'] else VEHICLE_CLASS_NAME.SPG
+            mode['spg_key'] = None if not key['spg_key'] else VEHICLE_CLASS_NAME.SPG
+            mode['tanklist'] = key['tanklist']
+        mode0, mode1, mode2, mode3 = mode_lst
+        return mode0, mode1, mode2, mode3
+
+    def loadModes(self):
+        if os.path.exists('res_mods/configs/extended_auto_bl_modes.json'):
+            with open('res_mods/configs/extended_auto_bl_modes.json') as f:
+                self.mode_data = json.load(f)
+        else:
+            try:
+                with open('res_mods/configs/extended_auto_bl_modes.json', 'w') as f1:
+                    json.dump(self.mode_data, f1, indent=2, sort_keys=True)
+            except (IOError, ValueError):
+                pass
+        mode_0, mode_1, mode_2, mode_3 = self.convert_to_schematic()
+        return mode_0, mode_1, mode_2, mode_3
 
     def increment_mode(self):
         if self.active_mode is not None:
@@ -61,6 +124,7 @@ class GlobalVars(object):
                 self.config_data = json.load(f)
                 self.updateFromConfigData()
         else:
+            self.updateConfigData()
             self.updateJsonWithConfigData()
 
     def toggle_extended(self):
@@ -105,29 +169,4 @@ class SchematicForMode(object):
         self.tank_cls_key.discard(None)
 
 
-def std_name(all_modes):
-    if all_modes:
-        all_modes_names = [modes.name for modes in all_modes]
-        start_nr = 1
-        basic_name = 'Mode '
-        start_name = basic_name + str(start_nr)
-        while start_name in all_modes_names:
-            start_nr += 1
-            start_name = basic_name + str(start_nr)
-        return start_name
-
-
 global_vars = GlobalVars()
-disabled_mode = SchematicForMode(name='Mod disabled', random=None, random_key=None)
-disabled_mode.removeNone()
-arty_mode = SchematicForMode(name='Only arty', other_modes=SchematicForMode.other_game_modes,
-                             other_modes_key=SchematicForMode.other_game_modes, spg=VEHICLE_CLASS_NAME.SPG,
-                             spg_key=VEHICLE_CLASS_NAME.SPG)
-arty_mode.removeNone()
-he_mode = SchematicForMode(name='Only HE', shell_HE=SHELL_TYPES.HIGH_EXPLOSIVE, random_key=None,
-                           other_modes=SchematicForMode.other_game_modes)
-he_mode.removeNone()
-he_bl_mode = SchematicForMode(name='HE + blacklist teams', shell_HE=SHELL_TYPES.HIGH_EXPLOSIVE,
-                              other_modes=SchematicForMode.other_game_modes,
-                              other_modes_key=SchematicForMode.other_game_modes)
-he_bl_mode.removeNone()
