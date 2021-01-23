@@ -1,4 +1,4 @@
-from constants import ARENA_BONUS_TYPE
+from constants import ARENA_BONUS_TYPE, ARENA_PERIOD
 from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
 import json
 import os
@@ -144,13 +144,13 @@ class GlobalVars(object):
 
 class SchematicForMode(object):
     other_game_modes = (0, 2, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-                        26, 27, 28, 29, 30, 31, 33)
+                        26, 27, 28, 29, 30, 31, 33)  # 22 == Ranked
 
     def __init__(self, name='', shell_AP=None, shell_APCR=None, shell_HEAT=None,
                  shell_HE=None, random=ARENA_BONUS_TYPE.REGULAR, random_key=ARENA_BONUS_TYPE.REGULAR,
                  other_modes=(None,), other_modes_key=(None,), light=None, light_key=None,
                  med=None, med_key=None, heavy=None, heavy_key=None, td=None, td_key=None, spg=None,
-                 spg_key=None, tanklist=None):
+                 spg_key=None, tanklist=None, auto_key_pressed=False):
         self.name = name
         self.shell_list = {shell_AP, shell_APCR, shell_HEAT, shell_HE}
         self.auto_mode = {random}
@@ -160,6 +160,7 @@ class SchematicForMode(object):
         self.tank_cls = {light, med, heavy, td, spg}
         self.tank_cls_key = {light_key, med_key, heavy_key, td_key, spg_key}
         self.tanklist = tanklist
+        self.auto_key_pressed = auto_key_pressed
 
     def removeNone(self):
         self.shell_list.discard(None)

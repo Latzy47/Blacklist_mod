@@ -267,6 +267,12 @@ def new_handler(event):
                 clear_blacklist()
 
 
+@run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
+def test(_, period, __, ___, ____):
+    if period == ARENA_PERIOD.BATTLE and global_vars.active_mode.auto_key_pressed:
+        pressed_key()
+
+
 if global_vars.extended:
     CONTACT_LIMIT.ROSTER_MAX_COUNT = global_vars.friends
     CONTACT_LIMIT.BLOCK_MAX_COUNT = global_vars.ignored
