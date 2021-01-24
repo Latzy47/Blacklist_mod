@@ -163,10 +163,20 @@ def pressed_key():
                 av_ses_id = vData['avatarSessionID']
                 _prebattleID = vData['prebattleID']
                 tag = vData['vehicleType'].type.tags  # frozenset
+                veh_name = vData['vehicleType'].type.name  # str
                 user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                 if user is not None:
-                    if global_vars.active_mode.tank_cls_key:
-                        if databaseID != databID and global_vars.active_mode.tank_cls_key & tag:
+                    if global_vars.active_mode.tank_cls_key & tag:
+                        if databaseID != databID:
+                            if not (user.isFriend() or user.isIgnored()):
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                    elif veh_name in global_vars.active_mode.tanklist:
+                        if databaseID != databID:
                             if not (user.isFriend() or user.isIgnored()):
                                 if prebID > 0 and prebID != _prebattleID:
                                     adding.addBattleIgnored(av_ses_id)
@@ -183,8 +193,16 @@ def pressed_key():
                                 adding.addBattleIgnored(av_ses_id)
                                 yield wait(1.1)
                 else:
-                    if global_vars.active_mode.tank_cls_key:
-                        if databaseID != databID and global_vars.active_mode.tank_cls_key & tag:
+                    if global_vars.active_mode.tank_cls_key & tag:
+                        if databaseID != databID:
+                            if prebID > 0 and prebID != _prebattleID:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                            elif prebID == 0:
+                                adding.addBattleIgnored(av_ses_id)
+                                yield wait(1.1)
+                    elif veh_name in global_vars.active_mode.tanklist:
+                        if databaseID != databID:
                             if prebID > 0 and prebID != _prebattleID:
                                 adding.addBattleIgnored(av_ses_id)
                                 yield wait(1.1)
@@ -230,12 +248,13 @@ def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
         BigWorld.callback(1, functools.partial(sendMessage, message, types))
 
 
-def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning):
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        gui.addClientMessage(message, isCurrentPlayer=True)
-    elif BigWorld.player():
-        sendMessage(message, types=types)
+def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning, enable=True):
+    if enable:
+        arena = getattr(BigWorld.player(), 'arena', None)
+        if arena is not None:
+            gui.addClientMessage(message, isCurrentPlayer=True)
+        elif BigWorld.player():
+            sendMessage(message, types=types)
 
 
 @run_before(game, 'handleKeyEvent')
