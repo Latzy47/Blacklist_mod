@@ -30,6 +30,11 @@ from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
 from skeletons.gui.battle_session import IBattleSessionProvider
 from extended_auto_bl_core import *
 
+__author__ = 'Latzy_Primus'
+__credits__ = ['lgfrbcsgo']
+__version__ = '1.3'
+__status__ = 'Production'
+
 if not os.path.exists('res_mods/configs'):
     os.makedirs('res_mods/configs')
 

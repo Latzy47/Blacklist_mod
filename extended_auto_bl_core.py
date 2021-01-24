@@ -31,7 +31,7 @@ class GlobalVars(object):
                                     'other_modes': False, 'other_modes_key': False,
                                     'light': False, 'light_key': False, 'med': False, 'med_key': False,
                                     'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
-                                    'spg': False, 'spg_key': False, 'tanklist': None,
+                                    'spg': False, 'spg_key': False, 'tanklist': [None],
                                     'auto_key_pressed': False, 'wheeled': False, 'wheeled_key': False},
                           'mode1': {'name': 'Only arty', 'shell_AP': False, 'shell_APCR': False,
                                     'shell_HEAT': False, 'shell_HE': False, 'random': True,
@@ -39,7 +39,7 @@ class GlobalVars(object):
                                     'other_modes': True, 'other_modes_key': True,
                                     'light': False, 'light_key': False, 'med': False, 'med_key': False,
                                     'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
-                                    'spg': True, 'spg_key': True, 'tanklist': None,
+                                    'spg': True, 'spg_key': True, 'tanklist': [None],
                                     'auto_key_pressed': False, 'wheeled': False, 'wheeled_key': False},
                           'mode2': {'name': 'Only HE', 'shell_AP': False, 'shell_APCR': False,
                                     'shell_HEAT': False, 'shell_HE': True, 'random': True,
@@ -47,7 +47,7 @@ class GlobalVars(object):
                                     'other_modes': True, 'other_modes_key': False,
                                     'light': False, 'light_key': False, 'med': False, 'med_key': False,
                                     'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
-                                    'spg': False, 'spg_key': False, 'tanklist': None,
+                                    'spg': False, 'spg_key': False, 'tanklist': [None],
                                     'auto_key_pressed': False, 'wheeled': False, 'wheeled_key': False},
                           'mode3': {'name': 'HE + blacklist teams', 'shell_AP': False, 'shell_APCR': False,
                                     'shell_HEAT': False, 'shell_HE': True, 'random': True,
@@ -55,7 +55,7 @@ class GlobalVars(object):
                                     'other_modes': True, 'other_modes_key': True,
                                     'light': False, 'light_key': False, 'med': False, 'med_key': False,
                                     'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
-                                    'spg': False, 'spg_key': False, 'tanklist': None,
+                                    'spg': False, 'spg_key': False, 'tanklist': [None],
                                     'auto_key_pressed': False, 'wheeled': False, 'wheeled_key': False}}
 
     def convert_to_schematic(self):
@@ -164,7 +164,7 @@ class SchematicForMode(object):
                  ranked=(None,), ranked_key=(None,),
                  other_modes=(None,), other_modes_key=(None,), light=None, light_key=None,
                  med=None, med_key=None, heavy=None, heavy_key=None, td=None, td_key=None, spg=None,
-                 spg_key=None, tanklist=None, auto_key_pressed=False, wheeled=None, wheeled_key=None):
+                 spg_key=None, tanklist=[None], auto_key_pressed=False, wheeled=None, wheeled_key=None):
         self.name = name
         self.shell_list = {shell_AP, shell_APCR, shell_HEAT, shell_HE}
         self.auto_mode = {random}
