@@ -126,14 +126,17 @@ def before(_, events):
                         extra = feedbackEvent.getExtra()
                         if extra:
                             if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
+                                tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
+                                veh_name_ = arena.vehicles[target_id]['vehicleType'].type.name
                                 if extra.getShellType() in global_vars.active_mode.shell_list:  # isShellGold()
                                     if target_id != BigWorld.player().playerVehicleID:
                                         global_vars.id_list.append(str(target_id))
-                                elif global_vars.active_mode.tank_cls:
-                                    tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
-                                    if global_vars.active_mode.tank_cls & tag_:
-                                        if target_id != BigWorld.player().playerVehicleID:
-                                            global_vars.id_list.append(str(target_id))
+                                elif global_vars.active_mode.tank_cls & tag_:
+                                    if target_id != BigWorld.player().playerVehicleID:
+                                        global_vars.id_list.append(str(target_id))
+                                elif veh_name_ in global_vars.active_mode.tanklist:
+                                    if target_id != BigWorld.player().playerVehicleID:
+                                        global_vars.id_list.append(str(target_id))
                                 BigWorld.callback(0, AUTO_add)
 
 
