@@ -133,13 +133,7 @@ def before(_, events):
                             if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
                                 tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
                                 veh_name_ = arena.vehicles[target_id]['vehicleType'].type.name
-                                if extra.getShellType() in global_vars.active_mode.shell_list:  # isShellGold()
-                                    if target_id != BigWorld.player().playerVehicleID:
-                                        global_vars.id_list.append(str(target_id))
-                                elif global_vars.active_mode.tank_cls & tag_:
-                                    if target_id != BigWorld.player().playerVehicleID:
-                                        global_vars.id_list.append(str(target_id))
-                                elif veh_name_ in global_vars.active_mode.tanklist:
+                                if extra.getShellType() in global_vars.active_mode.shell_list or global_vars.active_mode.tank_cls & tag_ or veh_name_ in global_vars.active_mode.tanklist:  # isShellGold()
                                     if target_id != BigWorld.player().playerVehicleID:
                                         global_vars.id_list.append(str(target_id))
                                 BigWorld.callback(0, AUTO_add)
@@ -174,16 +168,7 @@ def pressed_key():
                 veh_name = vData['vehicleType'].type.name  # str
                 user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                 if user is not None:
-                    if global_vars.active_mode.tank_cls_key & tag:
-                        if databaseID != databID:
-                            if not (user.isFriend() or user.isIgnored()):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                    elif veh_name in global_vars.active_mode.tanklist:
+                    if global_vars.active_mode.tank_cls_key & tag or veh_name in global_vars.active_mode.tanklist:
                         if databaseID != databID:
                             if not (user.isFriend() or user.isIgnored()):
                                 if prebID > 0 and prebID != _prebattleID:
@@ -201,15 +186,7 @@ def pressed_key():
                                 adding.addBattleIgnored(av_ses_id)
                                 yield wait(1.1)
                 else:
-                    if global_vars.active_mode.tank_cls_key & tag:
-                        if databaseID != databID:
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                    elif veh_name in global_vars.active_mode.tanklist:
+                    if global_vars.active_mode.tank_cls_key & tag or veh_name in global_vars.active_mode.tanklist:
                         if databaseID != databID:
                             if prebID > 0 and prebID != _prebattleID:
                                 adding.addBattleIgnored(av_ses_id)
