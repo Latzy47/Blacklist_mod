@@ -43,7 +43,7 @@ class GlobalVars(object):
                                     'auto_key_pressed': False, 'wheeled': False, 'wheeled_key': False},
                           'mode2': {'name': 'Only HE', 'shell_AP': False, 'shell_APCR': False,
                                     'shell_HEAT': False, 'shell_HE': True, 'random': True,
-                                    'random_key': False, 'ranked': True, 'ranked_key': True,
+                                    'random_key': False, 'ranked': True, 'ranked_key': False,
                                     'other_modes': True, 'other_modes_key': False,
                                     'light': False, 'light_key': False, 'med': False, 'med_key': False,
                                     'heavy': False, 'heavy_key': False, 'td': False, 'td_key': False,
