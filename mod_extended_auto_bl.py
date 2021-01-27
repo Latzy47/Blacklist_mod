@@ -169,7 +169,7 @@ def pressed_key():
                 user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                 if user is not None:
                     if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and (global_vars.active_mode.tank_cls_key & tag or veh_name in global_vars.active_mode.tanklist):
+                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
                             if not (user.isFriend() or user.isIgnored()):
                                 if prebID > 0 and prebID != _prebattleID:
                                     adding.addBattleIgnored(av_ses_id)
@@ -187,7 +187,7 @@ def pressed_key():
                                 yield wait(1.1)
                 else:
                     if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and (global_vars.active_mode.tank_cls_key & tag or veh_name in global_vars.active_mode.tanklist):
+                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
                             if prebID > 0 and prebID != _prebattleID:
                                 adding.addBattleIgnored(av_ses_id)
                                 yield wait(1.1)
