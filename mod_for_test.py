@@ -136,10 +136,10 @@ def onGameKeyDown(event):
         print 'onHandleKeyEvent', settings['stateKeySet']
 
 
+#g_modsSettingsApi.userSettings = {'windowTitle': 'Tough Tankman Mod Customizer'}
 savedSettings = g_modsSettingsApi.getModSettings(modLinkage, template)
 if savedSettings:
     settings = savedSettings
     g_modsSettingsApi.registerCallback(modLinkage, onModSettingsChanged, onButtonClicked)
 else:
     settings = g_modsSettingsApi.setModTemplate(modLinkage, template, onModSettingsChanged, onButtonClicked)
-#g_modsListApi.updateModification(id='modsSettingsApi', name='Test', description='Test description')
