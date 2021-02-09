@@ -19,7 +19,7 @@ class ConfigInterface(PYmodsConfigInterface):
         super(ConfigInterface, self).__init__()
 
     def init(self):
-        self.ID = 'X_Auto_BL'
+        self.ID = 'X_Auto_BL_2'
         self.version = '1.31 (%(file_compile_date)s)'
         self.defaultKeys = {'hotkey': [Keys.KEY_G]}
         self.data = {'enabled': True,
@@ -55,7 +55,7 @@ class ConfigInterface(PYmodsConfigInterface):
 
     def onHotkeyPressed(self, event):
         if event.isKeyDown() and checkKeys([Keys.KEY_G]):
-            print 'Test mod_Horns.py ###################'
+            print 'Test mod_Horns2.py ###################'
 
 
 class MyPYmodsSettingContainer(PYmodsSettingContainer):
