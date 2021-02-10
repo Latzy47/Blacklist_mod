@@ -248,7 +248,7 @@ def new_handler(event):
         isDown, key, mods, isRepeat = game.convertKeyEvent(event)
         if isDown and mods == 4 and key == Keys.KEY_O:
             global_vars.increment_mode()
-            SendGuiMessage(global_vars.active_mode.name)  # maybe handle empty list
+            SendGuiMessage(global_vars.active_mode.name)
         elif isDown and mods == 4 and key == Keys.KEY_B:
             if not global_vars.check_running:
                 pressed_key()
