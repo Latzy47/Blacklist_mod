@@ -9,9 +9,6 @@ from gui.modsListApi import g_modsListApi
 
 class ConfigInterface(PYmodsConfigInterface):
     def __init__(self):
-        self.lastRandID = {'ally': -1, 'enemy': -1, 'default': -1}
-        self.hornSoundEvent = None
-        self.soundCallback = None
         super(ConfigInterface, self).__init__()
 
     def init(self):

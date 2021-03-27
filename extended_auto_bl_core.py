@@ -164,7 +164,9 @@ class SchematicForMode(object):
                  ranked=(None,), ranked_key=(None,),
                  other_modes=(None,), other_modes_key=(None,), light=None, light_key=None,
                  med=None, med_key=None, heavy=None, heavy_key=None, td=None, td_key=None, spg=None,
-                 spg_key=None, tanklist=[None], auto_key_pressed=False, wheeled=None, wheeled_key=None):
+                 spg_key=None, tanklist=None, auto_key_pressed=False, wheeled=None, wheeled_key=None):
+        if tanklist is None:
+            tanklist = [None]
         self.name = name
         self.shell_list = {shell_AP, shell_APCR, shell_HEAT, shell_HE}
         self.auto_mode = {random}
