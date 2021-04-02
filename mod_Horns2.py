@@ -73,7 +73,7 @@ class ConfigInterface(PYmodsConfigInterface):
             'UI_setting_med_text': 'Medium',
             'UI_setting_med_tooltip': 'Every medium that hits you will be added to your blacklist.',
             'UI_setting_med_key_text': 'Medium key',
-            'UI_setting_med_key_tooltip': 'By pressing the blacklist key every light will be added to '
+            'UI_setting_med_key_tooltip': 'By pressing the blacklist key every medium will be added to '
                                           'your blacklist.',
             'UI_setting_heavy_text': 'Heavy',
             'UI_setting_heavy_tooltip': 'Every heavy that hits you will be added to your blacklist.',
@@ -137,6 +137,7 @@ class ConfigInterface(PYmodsConfigInterface):
                             self.tb.createControl('shell_HE')]}
 
     def onHotkeyPressed(self, event):
+        # read hotkeys
         if event.isKeyDown() and checkKeys([Keys.KEY_B, [Keys.KEY_LALT, Keys.KEY_RALT]]):
             print 'Test mod_Horns2.py ###################'
 
