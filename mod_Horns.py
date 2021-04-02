@@ -57,8 +57,8 @@ class ConfigInterface(PYmodsConfigInterface):
                             self.tb.createHotKey('hotkey1')],
                 'column2': [self.tb.createControl('extended'),
                             self.tb.createHotKey('hotkey2'),
-                            self.tb.createHotKey('hotkey4'),
-                            self.tb.createHotKey('hotkey5')]}
+                            self.tb.createHotKey('hotkey3'),
+                            self.tb.createHotKey('hotkey4')]}
 
     def onButtonPress(self, vName, value):
         pass
