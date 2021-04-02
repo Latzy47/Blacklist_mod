@@ -2,7 +2,6 @@
 import BigWorld
 import Keys
 from PYmodsCore import PYmodsConfigInterface,checkKeys
-from PYmodsCore.delayed.support import ConfigInterface as CI
 from PYmodsCore.config.interfaces.PyMods import PYmodsSettingContainer
 from gui.modsListApi import g_modsListApi
 
@@ -53,46 +52,58 @@ class ConfigInterface(PYmodsConfigInterface):
             'UI_setting_shell_HE_text': 'HE',
             'UI_setting_shell_HE_tooltip': 'Everyone who hits you with HE will be added to your blacklist.',
             'UI_setting_random_text': 'Random',
-            'UI_setting_random_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_random_tooltip': 'Adding to your blacklist by shots will work in randoms.',
             'UI_setting_random_key_text': 'Random key',
-            'UI_setting_random_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_random_key_tooltip': 'Adding to your blacklist by hotkey will work in randoms.',
             'UI_setting_ranked_text': 'Ranked',
-            'UI_setting_ranked_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_ranked_tooltip': 'Adding to your blacklist by shots will work in ranked.',
             'UI_setting_ranked_key_text': 'Ranked key',
-            'UI_setting_ranked_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_ranked_key_tooltip': 'Adding to your blacklist by hotkey will work in ranked.',
             'UI_setting_other_modes_text': 'Other modes',
-            'UI_setting_other_modes_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_other_modes_tooltip': 'Adding to your blacklist by shots will work in all modes '
+                                              '(excluding random and ranked).',
             'UI_setting_other_modes_key_text': 'Other modes key',
-            'UI_setting_other_modes_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_other_modes_key_tooltip': 'Adding to your blacklist by hotkey will work in all modes '
+                                                  '(excluding random and ranked).',
             'UI_setting_light_text': 'Light',
-            'UI_setting_light_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_light_tooltip': 'Every light that hits you will be added to your blacklist.',
             'UI_setting_light_key_text': 'Light key',
-            'UI_setting_light_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_light_key_tooltip': 'By pressing the blacklist key every light will be added to '
+                                            'your blacklist.',
             'UI_setting_med_text': 'Medium',
-            'UI_setting_med_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_med_tooltip': 'Every medium that hits you will be added to your blacklist.',
             'UI_setting_med_key_text': 'Medium key',
-            'UI_setting_med_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_med_key_tooltip': 'By pressing the blacklist key every light will be added to '
+                                          'your blacklist.',
             'UI_setting_heavy_text': 'Heavy',
-            'UI_setting_heavy_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_heavy_tooltip': 'Every heavy that hits you will be added to your blacklist.',
             'UI_setting_heavy_key_text': 'Heavy key',
-            'UI_setting_heavy_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_heavy_key_tooltip': 'By pressing the blacklist key every heavy will be added to '
+                                            'your blacklist.',
             'UI_setting_td_text': 'TD',
-            'UI_setting_td_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_td_tooltip': 'Every TD that hits you will be added to your blacklist.',
             'UI_setting_td_key_text': 'TD key',
-            'UI_setting_td_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_td_key_tooltip': 'By pressing the blacklist key every TD will be added to '
+                                         'your blacklist.',
             'UI_setting_spg_text': 'Arty',
-            'UI_setting_spg_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_spg_tooltip': 'Every arty that hits you will be added to your blacklist.',
             'UI_setting_spg_key_text': 'Arty key',
-            'UI_setting_spg_key_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_spg_key_tooltip': 'By pressing the blacklist key every arty will be added to '
+                                          'your blacklist.',
             'UI_setting_auto_key_pressed_text': 'Auto key pressed',
-            'UI_setting_auto_key_pressed_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_auto_key_pressed_tooltip': 'With the start of a battle the blacklist key will be '
+                                                   'automatically triggered.',
             'UI_setting_wheeled_text': 'Wheeled',
-            'UI_setting_wheeled_tooltip': 'This selects and shows the current mode.',
+            'UI_setting_wheeled_tooltip': 'Every wheeled vehicle that hits you will be added to your blacklist.',
             'UI_setting_wheeled_key_text': 'Wheeled key',
-            'UI_setting_wheeled_key_tooltip': 'This selects and shows the current mode.'
+            'UI_setting_wheeled_key_tooltip': 'By pressing the blacklist key every wheeled vehicle will '
+                                              'be added to your blacklist.'
         }
         super(ConfigInterface, self).init()
         self.containerClass = MyPYmodsSettingContainer
+        self.modSettingsID = 'x_auto_bl'
+        self.modsGroup = 'xAutoBl'
+        self.author = 'by FvckingLatzyMan'
 
     def createTemplate(self):
         return {'modDisplayName': self.i18n['UI_description'],
@@ -124,6 +135,10 @@ class ConfigInterface(PYmodsConfigInterface):
                             self.tb.createControl('wheeled_key'),
                             self.tb.createControl('shell_APCR'),
                             self.tb.createControl('shell_HE')]}
+
+    def onHotkeyPressed(self, event):
+        if event.isKeyDown() and checkKeys([Keys.KEY_B, [Keys.KEY_LALT, Keys.KEY_RALT]]):
+            print 'Test mod_Horns2.py ###################'
 
 
 class MyPYmodsSettingContainer(PYmodsSettingContainer):
