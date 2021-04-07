@@ -205,7 +205,7 @@ class ConfigInterface2(PYmodsConfigInterface):
     def onHotkeyPressed(self, event):
         # read hotkeys
         if event.isKeyDown() and checkKeys([Keys.KEY_B, [Keys.KEY_LALT, Keys.KEY_RALT]]):
-            print 'Test mod_Horns2.py ###################'
+            print 'Test mod_Horns.py ###################'
 
 
 class MyPYmodsSettingContainer(PYmodsSettingContainer):
