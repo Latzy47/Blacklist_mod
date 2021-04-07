@@ -1,27 +1,17 @@
 # coding=utf-8
-import functools
-import logging
-import sys
-from functools import wraps
 import datetime
 import BigWorld
 
 import BattleReplay
 import Keys
 import game
-import inspect
 from Avatar import PlayerAvatar
-from BattleFeedbackCommon import BATTLE_EVENT_TYPE
-from adisp import async, process
 from avatar_helpers import getAvatarDatabaseID
-from debug_utils import LOG_CURRENT_EXCEPTION
-from gui import SystemMessages
 from gui.battle_control.avatar_getter import getArena
 from gui.battle_control.controllers import anonymizer_fakes_ctrl
 from gui.battle_control.controllers import feedback_events
 from gui.battle_control.controllers import repositories
 from helpers import dependency
-from messenger import MessengerEntry
 from messenger.m_constants import UserEntityScope
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
 from messenger.proto.xmpp.contacts import ContactsManager
@@ -30,7 +20,7 @@ from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
 from skeletons.gui.battle_session import IBattleSessionProvider
 from extended_auto_bl_core import *
 
-__author__ = 'Latzy_Primus'
+__author__ = 'FvckingLatzyMan'
 __credits__ = ['lgfrbcsgo']
 __version__ = '1.31'
 __status__ = 'Production'
@@ -38,12 +28,6 @@ __status__ = 'Production'
 if not os.path.exists('res_mods/configs'):
     os.makedirs('res_mods/configs')
 
-
-_logger = logging.getLogger(__name__)  # _logger.error(msg)
-gui = MessengerEntry.g_instance.gui
-DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST, BATTLE_EVENT_TYPE.TRACK_ASSIST,
-                           BATTLE_EVENT_TYPE.STUN_ASSIST, BATTLE_EVENT_TYPE.DAMAGE,
-                           BATTLE_EVENT_TYPE.TANKING, BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
 
 disabled_mode_dict, arty_mode_dict, he_mode_dict, he_bl_mode_dict = global_vars.loadModes()
 disabled_mode = SchematicForMode(**disabled_mode_dict)
@@ -84,37 +68,6 @@ def AUTO_add():
         global_vars.check_running = False
 
 
-def hook(hook_handler):
-    def build_decorator(module, func_name):
-        def decorator(func):
-            orig_func = getattr(module, func_name)
-
-            @wraps(orig_func)
-            def func_wrapper(*args, **kwargs):
-                return hook_handler(orig_func, func, *args, **kwargs)
-
-            if inspect.ismodule(module):
-                setattr(sys.modules[module.__name__], func_name, func_wrapper)
-            elif inspect.isclass(module):
-                setattr(module, func_name, func_wrapper)
-
-            return func
-
-        return decorator
-
-    return build_decorator
-
-
-@hook
-def run_before(orig_func, func, *args, **kwargs):
-    try:
-        return func(*args, **kwargs)
-    except:
-        LOG_CURRENT_EXCEPTION()
-    finally:
-        return orig_func(*args, **kwargs)
-
-
 @run_before(PlayerAvatar, 'onBattleEvents')
 def before(_, events):
     arena = getattr(BigWorld.player(), 'arena', None)
@@ -137,11 +90,6 @@ def before(_, events):
                                     if target_id != BigWorld.player().playerVehicleID:
                                         global_vars.id_list.append(str(target_id))
                                 BigWorld.callback(0, AUTO_add)
-
-
-@async
-def wait(seconds, callback):
-    BigWorld.callback(seconds, lambda: callback(None))
 
 
 @process
@@ -224,22 +172,6 @@ def clear_blacklist():
         if idx == len(all_users)-1:
             SendGuiMessage('Cleared your blacklist!')
         global_vars.check_running = False
-
-
-def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
-    if BigWorld.player():
-        SystemMessages.pushMessage(message, types)
-    else:
-        BigWorld.callback(1, functools.partial(sendMessage, message, types))
-
-
-def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning, enable=True):
-    if enable:
-        arena = getattr(BigWorld.player(), 'arena', None)
-        if arena is not None:
-            gui.addClientMessage(message, isCurrentPlayer=True)
-        elif BigWorld.player():
-            sendMessage(message, types=types)
 
 
 @run_before(game, 'handleKeyEvent')

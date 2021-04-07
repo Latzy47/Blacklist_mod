@@ -4,6 +4,7 @@ from PYmodsCore import PYmodsConfigInterface, checkKeys
 from PYmodsCore.delayed.support import ConfigInterface as CI
 from PYmodsCore.config.interfaces.PyMods import PYmodsSettingContainer
 from gui.modsListApi import g_modsListApi
+from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
 
 
 class ConfigInterface(PYmodsConfigInterface):
@@ -90,4 +91,9 @@ class NewCI(CI):
 # not clickable
 g_modsListApi.updateModification('modsSettingsApi', enabled=False)
 
-_config = ConfigInterface()
+config0 = ConfigInterface()
+
+
+if config0.data['extended']:
+    CONTACT_LIMIT.ROSTER_MAX_COUNT = config0.data['friends']
+    CONTACT_LIMIT.BLOCK_MAX_COUNT = config0.data['ignored']

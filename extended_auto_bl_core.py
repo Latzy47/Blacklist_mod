@@ -2,6 +2,20 @@ from constants import ARENA_BONUS_TYPE, ARENA_PERIOD
 from gui.shared.gui_items.Vehicle import VEHICLE_CLASS_NAME
 import json
 import os
+from debug_utils import LOG_CURRENT_EXCEPTION
+import sys
+import inspect
+from functools import wraps
+from adisp import async, process
+from gui import SystemMessages
+import functools
+from messenger import MessengerEntry
+import logging
+from BattleFeedbackCommon import BATTLE_EVENT_TYPE
+
+DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST, BATTLE_EVENT_TYPE.TRACK_ASSIST,
+                           BATTLE_EVENT_TYPE.STUN_ASSIST, BATTLE_EVENT_TYPE.DAMAGE,
+                           BATTLE_EVENT_TYPE.TANKING, BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
 
 
 class SHELL_TYPES(object):
@@ -188,4 +202,58 @@ class SchematicForMode(object):
         self.tank_cls_key.discard(None)
 
 
+def hook(hook_handler):
+    def build_decorator(module, func_name):
+        def decorator(func):
+            orig_func = getattr(module, func_name)
+
+            @wraps(orig_func)
+            def func_wrapper(*args, **kwargs):
+                return hook_handler(orig_func, func, *args, **kwargs)
+
+            if inspect.ismodule(module):
+                setattr(sys.modules[module.__name__], func_name, func_wrapper)
+            elif inspect.isclass(module):
+                setattr(module, func_name, func_wrapper)
+
+            return func
+
+        return decorator
+
+    return build_decorator
+
+
+def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
+    if BigWorld.player():
+        SystemMessages.pushMessage(message, types)
+    else:
+        BigWorld.callback(1, functools.partial(sendMessage, message, types))
+
+
+def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning, enable=True):
+    if enable:
+        arena = getattr(BigWorld.player(), 'arena', None)
+        if arena is not None:
+            gui.addClientMessage(message, isCurrentPlayer=True)
+        elif BigWorld.player():
+            sendMessage(message, types=types)
+
+
+@hook
+def run_before(orig_func, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except:
+        LOG_CURRENT_EXCEPTION()
+    finally:
+        return orig_func(*args, **kwargs)
+
+
+@async
+def wait(seconds, callback):
+    BigWorld.callback(seconds, lambda: callback(None))
+
+
 global_vars = GlobalVars()
+_logger = logging.getLogger(__name__)  # _logger.error(msg)
+gui = MessengerEntry.g_instance.gui
