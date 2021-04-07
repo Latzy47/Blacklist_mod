@@ -1,214 +1,236 @@
-# coding=utf-8
-import datetime
-import BigWorld
-
-import BattleReplay
+# -*- coding: utf-8 -*-
 import Keys
-import game
-from Avatar import PlayerAvatar
-from avatar_helpers import getAvatarDatabaseID
-from gui.battle_control.avatar_getter import getArena
-from gui.battle_control.controllers import anonymizer_fakes_ctrl
-from gui.battle_control.controllers import feedback_events
-from gui.battle_control.controllers import repositories
-from helpers import dependency
-from messenger.m_constants import UserEntityScope
+from PYmodsCore import PYmodsConfigInterface, checkKeys
+from PYmodsCore.delayed.support import ConfigInterface as CI
+from PYmodsCore.config.interfaces.PyMods import PYmodsSettingContainer
+from gui.modsListApi import g_modsListApi
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
-from messenger.proto.xmpp.contacts import ContactsManager
-from messenger.proto.xmpp.xmpp_constants import XMPP_ITEM_TYPE
-from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
-from skeletons.gui.battle_session import IBattleSessionProvider
-from extended_auto_bl_core import *
-
-__author__ = 'FvckingLatzyMan'
-__credits__ = ['lgfrbcsgo']
-__version__ = '1.31'
-__status__ = 'Production'
-
-if not os.path.exists('res_mods/configs'):
-    os.makedirs('res_mods/configs')
 
 
-disabled_mode_dict, arty_mode_dict, he_mode_dict, he_bl_mode_dict = global_vars.loadModes()
-disabled_mode = SchematicForMode(**disabled_mode_dict)
-disabled_mode.removeNone()
-arty_mode = SchematicForMode(**arty_mode_dict)
-arty_mode.removeNone()
-he_mode = SchematicForMode(**he_mode_dict)
-he_mode.removeNone()
-he_bl_mode = SchematicForMode(**he_bl_mode_dict)
-he_bl_mode.removeNone()
-global_vars.all_modes.append(disabled_mode)
-global_vars.all_modes.append(arty_mode)
-global_vars.all_modes.append(he_mode)
-global_vars.all_modes.append(he_bl_mode)
-global_vars.loadJson()
+class ConfigInterface(PYmodsConfigInterface):
+    def __init__(self):
+        super(ConfigInterface, self).__init__()
+
+    def init(self):
+        self.ID = 'X_Auto_BL'
+        self.version = '1.31 (01.04.2021)'
+        self.defaultKeys = {'hotkey1': [Keys.KEY_O, [Keys.KEY_LALT, Keys.KEY_RALT]],  # switch modes
+                            'hotkey2': [Keys.KEY_B, [Keys.KEY_LALT, Keys.KEY_RALT]],  # key function
+                            'hotkey3': [Keys.KEY_C, [Keys.KEY_LALT, Keys.KEY_RALT]],  # enable clear
+                            'hotkey4': [Keys.KEY_X, [Keys.KEY_LALT, Keys.KEY_RALT]]}  # start clear
+        self.data = {'enabled': True,
+                     'ignored': 1000000,
+                     'extended': True,
+                     'friends': 1000000,
+                     'hotkey1': self.defaultKeys['hotkey1'],
+                     'hotkey2': self.defaultKeys['hotkey2'],
+                     'hotkey3': self.defaultKeys['hotkey3'],
+                     'hotkey4': self.defaultKeys['hotkey4']}
+        self.i18n = {
+            'UI_description': 'Extended automated blacklist',
+            'UI_setting_ignored_text': 'Number blacklist',
+            'UI_setting_ignored_tooltip': 'This number shows the length of your blacklist.',
+            'UI_setting_extended_text': 'Extend lists',
+            'UI_setting_extended_tooltip': 'This enables/disables the extention of the blacklist'
+                                           ' and friendlist.\n'
+                                           'Restarting the game is required to take effect.',
+            'UI_setting_friends_text': 'Number friendlist',
+            'UI_setting_friends_tooltip': 'This number shows the length of your friendlist.',
+            'UI_setting_hotkey1_text': 'Switch modes',
+            'UI_setting_hotkey1_tooltip': 'Pressing this hotkey will switch between modes.',
+            'UI_setting_hotkey2_text': 'Blacklist key',
+            'UI_setting_hotkey2_tooltip': 'Pressing this hotkey will blacklist your desired tanks.',
+            'UI_setting_hotkey3_text': 'Clear enable',
+            'UI_setting_hotkey3_tooltip': 'Pressing this hotkey will enable/disable clearing your blacklist.',
+            'UI_setting_hotkey4_text': 'Clear start',
+            'UI_setting_hotkey4_tooltip': 'Pressing this hotkey will start clearing your blacklist.'}
+        super(ConfigInterface, self).init()
+        self.containerClass = MyPYmodsSettingContainer
+        self.modSettingsID = 'x_auto_bl'
+        self.modsGroup = 'xAutoBl'
+        self.author = 'by FvckingLatzyMan'
+
+    def createTemplate(self):
+        return {'modDisplayName': self.i18n['UI_description'],
+                'enabled': self.data['enabled'],
+                'column1': [self.tb.createSlider('ignored', 5000, 1000000, 5000),
+                            self.tb.createSlider('friends', 5000, 1000000, 5000),
+                            self.tb.createHotKey('hotkey1')],
+                'column2': [self.tb.createControl('extended'),
+                            self.tb.createHotKey('hotkey2'),
+                            self.tb.createHotKey('hotkey3'),
+                            self.tb.createHotKey('hotkey4')]}
+
+    def onButtonPress(self, vName, value):
+        pass
+
+    def onMSADestroy(self):
+        self.readCurrentSettings()
+
+    def onHotkeyPressed(self, event):
+        if event.isKeyDown() and checkKeys(self.data['hotkey2']):
+            print 'Test mod_Horns.py ###################'
 
 
-@process
-def AUTO_add():
-    if not global_vars.check_running:
-        global_vars.check_running = True
-        sessionProvider = dependency.instance(IBattleSessionProvider)
-        setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-        adding2 = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-        while len(global_vars.id_list) > 0:
-            user = adding2.usersStorage.getUser(global_vars.id_list[0], scope=UserEntityScope.BATTLE)
-            if user is not None:
-                if not (user.isFriend() or user.isIgnored()):
-                    adding2.addBattleIgnored(global_vars.id_list[0])
-                    yield wait(1.1)
-                    global_vars.id_list.pop(0)
-                else:
-                    global_vars.id_list.pop(0)
-            else:
-                adding2.addBattleIgnored(global_vars.id_list[0])
-                yield wait(1.1)
-                global_vars.id_list.pop(0)
-        global_vars.check_running = False
+class ConfigInterface2(PYmodsConfigInterface):
+    def __init__(self):
+        super(ConfigInterface2, self).__init__()
+
+    def init(self):
+        self.ID = 'X_Auto_BL_2'
+        self.version = '1.31 (10.02.2021)'
+        self.data = {'enabled': True,
+                     'name': 'HE + blacklist teams',
+                     'shell_AP': False,
+                     'shell_APCR': False,
+                     'shell_HEAT': False,
+                     'shell_HE': False,
+                     'random': False,
+                     'random_key': False,
+                     'ranked': False,
+                     'ranked_key': False,
+                     'other_modes': False,
+                     'other_modes_key': False,
+                     'light': False,
+                     'light_key': False,
+                     'med': False,
+                     'med_key': False,
+                     'heavy': False,
+                     'heavy_key': False,
+                     'td': False,
+                     'td_key': False,
+                     'spg': False,
+                     'spg_key': False,
+                     'tanklist': [None],
+                     'auto_key_pressed': False,
+                     'wheeled': False,
+                     'wheeled_key': False}
+        self.i18n = {
+            'UI_description': 'Mode 1',
+            'UI_setting_name_text': 'Mode name',
+            'UI_setting_name_tooltip': 'You can rename the mode to whatever you want.',
+            'UI_setting_shell_AP_text': 'AP',
+            'UI_setting_shell_AP_tooltip': 'Everyone who hits you with AP will be added to your blacklist.',
+            'UI_setting_shell_APCR_text': 'APCR',
+            'UI_setting_shell_APCR_tooltip': 'Everyone who hits you with APCR will be added to your blacklist.',
+            'UI_setting_shell_HEAT_text': 'HEAT',
+            'UI_setting_shell_HEAT_tooltip': 'Everyone who hits you with HEAT will be added to your blacklist.',
+            'UI_setting_shell_HE_text': 'HE',
+            'UI_setting_shell_HE_tooltip': 'Everyone who hits you with HE will be added to your blacklist.',
+            'UI_setting_random_text': 'Random',
+            'UI_setting_random_tooltip': 'Adding to your blacklist by shots will work in randoms.',
+            'UI_setting_random_key_text': 'Random key',
+            'UI_setting_random_key_tooltip': 'Adding to your blacklist by hotkey will work in randoms.',
+            'UI_setting_ranked_text': 'Ranked',
+            'UI_setting_ranked_tooltip': 'Adding to your blacklist by shots will work in ranked.',
+            'UI_setting_ranked_key_text': 'Ranked key',
+            'UI_setting_ranked_key_tooltip': 'Adding to your blacklist by hotkey will work in ranked.',
+            'UI_setting_other_modes_text': 'Other modes',
+            'UI_setting_other_modes_tooltip': 'Adding to your blacklist by shots will work in all modes '
+                                              '(excluding random and ranked).',
+            'UI_setting_other_modes_key_text': 'Other modes key',
+            'UI_setting_other_modes_key_tooltip': 'Adding to your blacklist by hotkey will work in all modes '
+                                                  '(excluding random and ranked).',
+            'UI_setting_light_text': 'Light',
+            'UI_setting_light_tooltip': 'Every light that hits you will be added to your blacklist.',
+            'UI_setting_light_key_text': 'Light key',
+            'UI_setting_light_key_tooltip': 'By pressing the blacklist key every light will be added to '
+                                            'your blacklist.',
+            'UI_setting_med_text': 'Medium',
+            'UI_setting_med_tooltip': 'Every medium that hits you will be added to your blacklist.',
+            'UI_setting_med_key_text': 'Medium key',
+            'UI_setting_med_key_tooltip': 'By pressing the blacklist key every medium will be added to '
+                                          'your blacklist.',
+            'UI_setting_heavy_text': 'Heavy',
+            'UI_setting_heavy_tooltip': 'Every heavy that hits you will be added to your blacklist.',
+            'UI_setting_heavy_key_text': 'Heavy key',
+            'UI_setting_heavy_key_tooltip': 'By pressing the blacklist key every heavy will be added to '
+                                            'your blacklist.',
+            'UI_setting_td_text': 'TD',
+            'UI_setting_td_tooltip': 'Every TD that hits you will be added to your blacklist.',
+            'UI_setting_td_key_text': 'TD key',
+            'UI_setting_td_key_tooltip': 'By pressing the blacklist key every TD will be added to '
+                                         'your blacklist.',
+            'UI_setting_spg_text': 'Arty',
+            'UI_setting_spg_tooltip': 'Every arty that hits you will be added to your blacklist.',
+            'UI_setting_spg_key_text': 'Arty key',
+            'UI_setting_spg_key_tooltip': 'By pressing the blacklist key every arty will be added to '
+                                          'your blacklist.',
+            'UI_setting_auto_key_pressed_text': 'Auto key pressed',
+            'UI_setting_auto_key_pressed_tooltip': 'With the start of a battle the blacklist key will be '
+                                                   'automatically triggered.',
+            'UI_setting_wheeled_text': 'Wheeled',
+            'UI_setting_wheeled_tooltip': 'Every wheeled vehicle that hits you will be added to your blacklist.',
+            'UI_setting_wheeled_key_text': 'Wheeled key',
+            'UI_setting_wheeled_key_tooltip': 'By pressing the blacklist key every wheeled vehicle will '
+                                              'be added to your blacklist.'
+        }
+        super(ConfigInterface2, self).init()
+        self.containerClass = MyPYmodsSettingContainer
+        self.modSettingsID = 'x_auto_bl'
+        self.modsGroup = 'xAutoBl'
+        self.author = 'by FvckingLatzyMan'
+
+    def createTemplate(self):
+        return {'modDisplayName': self.i18n['UI_description'],
+                'enabled': self.data['enabled'],
+                'column1': [self.tb.createControl('name', 'TextInput'),
+                            self.tb.createControl('random'),
+                            self.tb.createControl('ranked'),
+                            self.tb.createControl('other_modes'),
+                            self.tb.createControl('light'),
+                            self.tb.createControl('med'),
+                            self.tb.createControl('heavy'),
+                            self.tb.createControl('td'),
+                            self.tb.createControl('spg'),
+                            self.tb.createControl('wheeled'),
+                            self.tb.createControl('shell_AP'),
+                            self.tb.createControl('shell_HEAT')],
+                'column2': [self.tb.createEmpty(),
+                            self.tb.createEmpty(),
+                            self.tb.createEmpty(),
+                            self.tb.createControl('auto_key_pressed'),
+                            self.tb.createControl('random_key'),
+                            self.tb.createControl('ranked_key'),
+                            self.tb.createControl('other_modes_key'),
+                            self.tb.createControl('light_key'),
+                            self.tb.createControl('med_key'),
+                            self.tb.createControl('heavy_key'),
+                            self.tb.createControl('td_key'),
+                            self.tb.createControl('spg_key'),
+                            self.tb.createControl('wheeled_key'),
+                            self.tb.createControl('shell_APCR'),
+                            self.tb.createControl('shell_HE')]}
+
+    def onHotkeyPressed(self, event):
+        # read hotkeys
+        if event.isKeyDown() and checkKeys([Keys.KEY_B, [Keys.KEY_LALT, Keys.KEY_RALT]]):
+            print 'Test mod_Horns2.py ###################'
 
 
-@run_before(PlayerAvatar, 'onBattleEvents')
-def before(_, events):
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        if arena.bonusType in global_vars.active_mode.auto_mode:
-            player = BigWorld.player()
-            guiSessionProvider = player.guiSessionProvider
-            if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
-                for data in events:
-                    feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
-                    eventType = feedbackEvent.getBattleEventType()
-                    target_id = feedbackEvent.getTargetID()
-                    if eventType in DAMAGE_EVENTS:
-                        extra = feedbackEvent.getExtra()
-                        if extra:
-                            if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
-                                tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
-                                veh_name_ = arena.vehicles[target_id]['vehicleType'].type.name
-                                if extra.getShellType() in global_vars.active_mode.shell_list or global_vars.active_mode.tank_cls & tag_ or veh_name_ in global_vars.active_mode.tanklist:  # isShellGold()
-                                    if target_id != BigWorld.player().playerVehicleID:
-                                        global_vars.id_list.append(str(target_id))
-                                BigWorld.callback(0, AUTO_add)
+class MyPYmodsSettingContainer(PYmodsSettingContainer):
+    def init(self):
+        super(MyPYmodsSettingContainer, self).init()
+        self.i18n = {
+            'modsListApiName': "Blacklist mod",
+            'modsListApiDescription': "Extended automated blacklist modification settings",
+            'windowTitle': "Blacklist mod settings",
+            'enableButtonTooltip': '{HEADER}ON/OFF{/HEADER}{BODY}Enable/disable this mod{/BODY}'}
 
 
-@process
-def pressed_key():
-    prebID = 0
-    global_vars.check_running = True
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        if arena.bonusType in global_vars.active_mode.key_mode:
-            sessionProvider = dependency.instance(IBattleSessionProvider)
-            setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-            adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-            databID = getAvatarDatabaseID()
-
-            vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
-            if vehID is not None and vehID in arena.vehicles:
-                prebID = arena.vehicles[vehID]['prebattleID']
-
-            for (vehicleID, vData) in getArena().vehicles.iteritems():
-                databaseID = vData['accountDBID']
-                av_ses_id = vData['avatarSessionID']
-                _prebattleID = vData['prebattleID']
-                tag = vData['vehicleType'].type.tags  # frozenset
-                veh_name = vData['vehicleType'].type.name  # str
-                user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
-                if user is not None:
-                    if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
-                            if not (user.isFriend() or user.isIgnored()):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                    else:
-                        if databaseID != databID and not (user.isFriend() or user.isIgnored()):
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                else:
-                    if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                    else:
-                        if databaseID != databID:
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-            SendGuiMessage('Blacklisting finished!')
-    global_vars.check_running = False
+# disable his patreon
+class NewCI(CI):
+    def createTemplate(self):
+        return {}
 
 
-@process
-def clear_blacklist():
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is None and not global_vars.check_running:
-        global_vars.check_running = True
-        blacklisted_contacts = ContactsManager()
-        all_users = blacklisted_contacts.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-        idx = 0
-        while idx < len(all_users) and global_vars.enable_clear:
-            blacklisted_contacts.removeIgnored(all_users[idx].getID(), False)
-            idx += 1
-            yield wait(1.1)
-            if idx % 500 == 0:
-                users_left = len(all_users) - idx
-                SendGuiMessage('There is '+str(datetime.timedelta(seconds=round(users_left*1.1)))+' left!')
-        if idx == len(all_users)-1:
-            SendGuiMessage('Cleared your blacklist!')
-        global_vars.check_running = False
+# not clickable
+g_modsListApi.updateModification('modsSettingsApi', enabled=False)
+
+config0 = ConfigInterface()
+config1 = ConfigInterface2()
 
 
-@run_before(game, 'handleKeyEvent')
-def new_handler(event):
-    if not BattleReplay.isPlaying():
-        isDown, key, mods, isRepeat = game.convertKeyEvent(event)
-        if isDown and mods == 4 and key == Keys.KEY_O:
-            global_vars.increment_mode()
-            SendGuiMessage(global_vars.active_mode.name)
-        elif isDown and mods == 4 and key == Keys.KEY_B:
-            if not global_vars.check_running:
-                pressed_key()
-        elif isDown and mods == 2 and key == Keys.KEY_O:
-            global_vars.toggle_extended()
-            if not global_vars.extended:
-                SendGuiMessage("Disabled extention")
-            elif global_vars.extended:
-                SendGuiMessage("Enabled extention")
-        elif isDown and mods == 4 and key == Keys.KEY_C:
-            global_vars.toggle_enable_clear()
-            if not global_vars.enable_clear:
-                SendGuiMessage("Disabled clearing your blacklist!")
-            elif global_vars.enable_clear:
-                contactsForTime = ContactsManager()
-                all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=round(len(all_bl_users)*1.1)))))
-        elif isDown and mods == 4 and key == Keys.KEY_X:
-            if global_vars.enable_clear:
-                clear_blacklist()
-
-
-@run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
-def test(_, period, __, ___, ____):
-    if period == ARENA_PERIOD.BATTLE and global_vars.active_mode.auto_key_pressed:
-        pressed_key()
-
-
-if global_vars.extended:
-    CONTACT_LIMIT.ROSTER_MAX_COUNT = global_vars.friends
-    CONTACT_LIMIT.BLOCK_MAX_COUNT = global_vars.ignored
+if config0.data['extended']:
+    CONTACT_LIMIT.ROSTER_MAX_COUNT = config0.data['friends']
+    CONTACT_LIMIT.BLOCK_MAX_COUNT = config0.data['ignored']
