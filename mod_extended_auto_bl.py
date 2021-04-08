@@ -6,6 +6,7 @@ from PYmodsCore.config.interfaces.PyMods import PYmodsSettingContainer
 from PYmodsCore.config.json_reader import loadJsonOrdered
 from gui.modsListApi import g_modsListApi
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
+from extended_auto_bl_core import *
 
 
 class ConfigInterface(PYmodsConfigInterface):
@@ -76,14 +77,12 @@ class ConfigInterface(PYmodsConfigInterface):
 class ConfigInterface2(PYmodsConfigInterface):
     def __init__(self):
         super(ConfigInterface2, self).__init__()
-        self.modeNumber = 0
-        self.currentNumber = 1  # TODO: read from json-file
 
     def init(self):
         self.ID = 'X_Auto_BL_2'
         self.version = '1.31 (10.02.2021)'
         self.data = {'enabled': True,
-                     'name': 'HE + blacklist teams',
+                     'name': 'Test mode',
                      'shell_AP': False,
                      'shell_APCR': False,
                      'shell_HEAT': False,
@@ -107,7 +106,10 @@ class ConfigInterface2(PYmodsConfigInterface):
                      'tanklist': [None],
                      'auto_key_pressed': False,
                      'wheeled': False,
-                     'wheeled_key': False}
+                     'wheeled_key': False,
+                     'modeNumber': 0,
+                     'currentNumber': 1,
+                     'activeMode': False}
         self.i18n = {
             'UI_description': 'Mode 2',
             'UI_setting_name_text': 'Mode name',
@@ -206,16 +208,20 @@ class ConfigInterface2(PYmodsConfigInterface):
                             self.tb.createControl('shell_HE')]}
 
     def onHotkeyPressed(self, event):
-        # read hotkeys
-        if event.isKeyDown() and checkKeys([Keys.KEY_B, [Keys.KEY_LALT, Keys.KEY_RALT]]):
-            print 'Test mod_Horns2.py ###################'
+        if event.isKeyDown() and checkKeys(config0.getData()['hotkey1']):
+            if self.data['currentNumber'] > 0:
+                self.data['currentNumber'] = 0
+            else:
+                self.data['currentNumber'] += 1
+            self.data['activeMode'] = self.data['currentNumber'] == self.data['modeNumber']
+            self.writeDataJson()
+            if self.data['activeMode']:
+                SendGuiMessage(self.data['name'])
 
 
 class ConfigInterface3(PYmodsConfigInterface):
     def __init__(self):
         super(ConfigInterface3, self).__init__()
-        self.modeNumber = 1
-        self.currentNumber = 1
 
     def init(self):
         self.ID = 'X_Auto_BL_3'
@@ -245,7 +251,10 @@ class ConfigInterface3(PYmodsConfigInterface):
                      'tanklist': [None],
                      'auto_key_pressed': False,
                      'wheeled': False,
-                     'wheeled_key': False}
+                     'wheeled_key': False,
+                     'modeNumber': 1,
+                     'currentNumber': 1,
+                     'activeMode': True}
         self.i18n = {
             'UI_description': 'Mode 1',
             'UI_setting_name_text': 'Mode name',
@@ -344,11 +353,15 @@ class ConfigInterface3(PYmodsConfigInterface):
                             self.tb.createControl('shell_HE')]}
 
     def onHotkeyPressed(self, event):
-        # read hotkeys
-        data = config0.getData()
-        print data['hotkey2']
-        # if event.isKeyDown() and checkKeys(data['hotKey2']):
-        #     print 'Test mod_Horns2.py ###################'
+        if event.isKeyDown() and checkKeys(config0.getData()['hotkey1']):
+            if self.data['currentNumber'] > 0:
+                self.data['currentNumber'] = 0
+            else:
+                self.data['currentNumber'] += 1
+            self.data['activeMode'] = self.data['currentNumber'] == self.data['modeNumber']
+            self.writeDataJson()
+            if self.data['activeMode']:
+                SendGuiMessage(self.data['name'])
 
 
 class MyPYmodsSettingContainer(PYmodsSettingContainer):
@@ -375,6 +388,6 @@ config1 = ConfigInterface2()
 config2 = ConfigInterface3()
 
 
-# if config0.data['extended']:
-#     CONTACT_LIMIT.ROSTER_MAX_COUNT = config0.data['friends']
-#     CONTACT_LIMIT.BLOCK_MAX_COUNT = config0.data['ignored']
+if config0.data['extended']:
+    CONTACT_LIMIT.ROSTER_MAX_COUNT = config0.data['friends']
+    CONTACT_LIMIT.BLOCK_MAX_COUNT = config0.data['ignored']

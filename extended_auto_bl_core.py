@@ -12,6 +12,7 @@ import functools
 from messenger import MessengerEntry
 import logging
 from BattleFeedbackCommon import BATTLE_EVENT_TYPE
+import BigWorld
 
 DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST, BATTLE_EVENT_TYPE.TRACK_ASSIST,
                            BATTLE_EVENT_TYPE.STUN_ASSIST, BATTLE_EVENT_TYPE.DAMAGE,
