@@ -204,7 +204,7 @@ def new_handler(event):
 
 
 @run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
-def test(_, period, __, ___, ____):
+def autoKeyPressed(_, period, __, ___, ____):
     if period == ARENA_PERIOD.BATTLE and global_vars.active_mode.auto_key_pressed:
         pressed_key()
 
