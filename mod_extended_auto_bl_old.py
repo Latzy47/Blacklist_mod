@@ -31,13 +31,9 @@ if not os.path.exists('res_mods/configs'):
 
 disabled_mode_dict, arty_mode_dict, he_mode_dict, he_bl_mode_dict = global_vars.loadModes()
 disabled_mode = SchematicForMode(**disabled_mode_dict)
-disabled_mode.removeNone()
 arty_mode = SchematicForMode(**arty_mode_dict)
-arty_mode.removeNone()
 he_mode = SchematicForMode(**he_mode_dict)
-he_mode.removeNone()
 he_bl_mode = SchematicForMode(**he_bl_mode_dict)
-he_bl_mode.removeNone()
 global_vars.all_modes.append(disabled_mode)
 global_vars.all_modes.append(arty_mode)
 global_vars.all_modes.append(he_mode)
