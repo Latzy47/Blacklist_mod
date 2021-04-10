@@ -610,59 +610,62 @@ def AUTO_add():
 def before(_, events):
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is not None:
-        if arena.bonusType in global_vars.active_mode.auto_mode:
-            player = BigWorld.player()
-            guiSessionProvider = player.guiSessionProvider
-            if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
-                for data in events:
-                    feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
-                    eventType = feedbackEvent.getBattleEventType()
-                    target_id = feedbackEvent.getTargetID()
-                    if eventType in DAMAGE_EVENTS:
-                        extra = feedbackEvent.getExtra()
-                        if extra:
-                            if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
-                                tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
-                                veh_name_ = arena.vehicles[target_id]['vehicleType'].type.name
-                                if extra.getShellType() in global_vars.active_mode.shell_list or global_vars.active_mode.tank_cls & tag_ or veh_name_ in global_vars.active_mode.tanklist:  # isShellGold()
-                                    if target_id != BigWorld.player().playerVehicleID:
-                                        global_vars.id_list.append(str(target_id))
-                                BigWorld.callback(0, AUTO_add)
-
-
-@run_before(game, 'handleKeyEvent')
-def new_handler(event):
-    if not BattleReplay.isPlaying():
-        isDown, key, mods, isRepeat = game.convertKeyEvent(event)
-        if isDown and mods == 4 and key == Keys.KEY_O:
-            global_vars.increment_mode()
-            SendGuiMessage(global_vars.active_mode.name)
-        elif isDown and mods == 4 and key == Keys.KEY_B:
-            if not global_vars.check_running:
-                pressed_key()
-        elif isDown and mods == 2 and key == Keys.KEY_O:
-            global_vars.toggle_extended()
-            if not global_vars.extended:
-                SendGuiMessage("Disabled extention")
-            elif global_vars.extended:
-                SendGuiMessage("Enabled extention")
-        elif isDown and mods == 4 and key == Keys.KEY_C:
-            global_vars.toggle_enable_clear()
-            if not global_vars.enable_clear:
-                SendGuiMessage("Disabled clearing your blacklist!")
-            elif global_vars.enable_clear:
-                contactsForTime = ContactsManager()
-                all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=round(len(all_bl_users)*1.1)))))
-        elif isDown and mods == 4 and key == Keys.KEY_X:
-            if global_vars.enable_clear:
-                clear_blacklist()
+        conf_1_data = config1.getData()
+        if conf_1_data['enabled'] and conf_1_data['activeMode']:
+            if arena.bonusType in config1.schematic.auto_mode:
+                player = BigWorld.player()
+                guiSessionProvider = player.guiSessionProvider
+                if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
+                    for data in events:
+                        feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
+                        eventType = feedbackEvent.getBattleEventType()
+                        target_id = feedbackEvent.getTargetID()
+                        if eventType in DAMAGE_EVENTS:
+                            extra = feedbackEvent.getExtra()
+                            if extra:
+                                if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
+                                    tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
+                                    veh_name_ = arena.vehicles[target_id]['vehicleType'].type.name
+                                    if extra.getShellType() in config1.schematic.shell_list or config1.schematic.tank_cls & tag_ or veh_name_ in config1.schematic.tanklist:  # isShellGold()
+                                        if target_id != BigWorld.player().playerVehicleID:
+                                            config0.id_list.append(str(target_id))
+                                    BigWorld.callback(0, AUTO_add)
+            return
+        conf_2_data = config2.getData()
+        if conf_2_data['enabled'] and conf_2_data['activeMode']:
+            if arena.bonusType in config2.schematic.auto_mode:
+                player = BigWorld.player()
+                guiSessionProvider = player.guiSessionProvider
+                if guiSessionProvider.shared.vehicleState.getControllingVehicleID() == player.playerVehicleID:
+                    for data in events:
+                        feedbackEvent = feedback_events.PlayerFeedbackEvent.fromDict(data)
+                        eventType = feedbackEvent.getBattleEventType()
+                        target_id = feedbackEvent.getTargetID()
+                        if eventType in DAMAGE_EVENTS:
+                            extra = feedbackEvent.getExtra()
+                            if extra:
+                                if eventType == BATTLE_EVENT_TYPE.RECEIVED_DAMAGE:
+                                    tag_ = arena.vehicles[target_id]['vehicleType'].type.tags
+                                    veh_name_ = arena.vehicles[target_id]['vehicleType'].type.name
+                                    if extra.getShellType() in config2.schematic.shell_list or config2.schematic.tank_cls & tag_ or veh_name_ in config2.schematic.tanklist:  # isShellGold()
+                                        if target_id != BigWorld.player().playerVehicleID:
+                                            config0.id_list.append(str(target_id))
+                                    BigWorld.callback(0, AUTO_add)
+            return
+# TODO: handle tanklist
 
 
 @run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
 def autoKeyPressed(_, period, __, ___, ____):
-    if period == ARENA_PERIOD.BATTLE and global_vars.active_mode.auto_key_pressed:
-        pressed_key()
+    if period == ARENA_PERIOD.BATTLE:
+        conf1_data = config1.getData()
+        if conf1_data['enabled'] and conf1_data['auto_key_pressed'] and conf1_data['activeMode']:
+            config1.pressed_key()
+            return
+        conf2_data = config2.getData()
+        if conf2_data['enabled'] and conf2_data['auto_key_pressed'] and conf2_data['activeMode']:
+            config2.pressed_key()
+            return
 
 
 # not clickable
