@@ -200,7 +200,7 @@ class ConfigInterface2(PYmodsConfigInterface):
                                               '(excluding random and ranked).',
             'UI_setting_other_modes_key_text': 'Other modes key',
             'UI_setting_other_modes_key_tooltip': 'Adding to your blacklist by hotkey will work in all modes '
-                                                  '(excluding random and ranked).',
+                                                  '(excluding random and ranked). This may not work in every mode.',
             'UI_setting_light_text': 'Light',
             'UI_setting_light_tooltip': 'Every light that hits you will be added to your blacklist.',
             'UI_setting_light_key_text': 'Light key',
@@ -443,7 +443,7 @@ class ConfigInterface3(PYmodsConfigInterface):
                                               '(excluding random and ranked).',
             'UI_setting_other_modes_key_text': 'Other modes key',
             'UI_setting_other_modes_key_tooltip': 'Adding to your blacklist by hotkey will work in all modes '
-                                                  '(excluding random and ranked).',
+                                                  '(excluding random and ranked). This may not work in every mode.',
             'UI_setting_light_text': 'Light',
             'UI_setting_light_tooltip': 'Every light that hits you will be added to your blacklist.',
             'UI_setting_light_key_text': 'Light key',
