@@ -88,9 +88,6 @@ class ConfigInterface(PYmodsConfigInterface):
                             self.tb.createHotKey('hotkey3'),
                             self.tb.createHotKey('hotkey4')]}
 
-    def onButtonPress(self, vName, value):
-        pass
-
     def onMSADestroy(self):
         self.readCurrentSettings()
 
@@ -174,7 +171,8 @@ class ConfigInterface2(PYmodsConfigInterface):
                      'wheeled_key': False,
                      'modeNumber': 0,
                      'currentNumber': 1,
-                     'activeMode': False}
+                     'activeMode': False,
+                     'specific_tank': 'Some specific tank'}
         self.i18n = {
             'UI_description': 'Mode 2',
             'UI_setting_name_text': 'Mode name',
@@ -233,7 +231,10 @@ class ConfigInterface2(PYmodsConfigInterface):
             'UI_setting_wheeled_tooltip': 'Every wheeled vehicle that hits you will be added to your blacklist.',
             'UI_setting_wheeled_key_text': 'Wheeled key',
             'UI_setting_wheeled_key_tooltip': 'By pressing the blacklist key every wheeled vehicle will '
-                                              'be added to your blacklist.'
+                                              'be added to your blacklist.',
+            'UI_setting_specific_tank_text': 'Some specific tank',
+            'UI_setting_specific_tank_tooltip': 'You can add here specific tanks to be blacklisted. Read the '
+                                                'README-file for further information. You will need the button below.'
         }
         super(ConfigInterface2, self).init()
         self.containerClass = MyPYmodsSettingContainer
@@ -255,12 +256,10 @@ class ConfigInterface2(PYmodsConfigInterface):
                             self.tb.createControl('spg'),
                             self.tb.createControl('wheeled'),
                             self.tb.createControl('shell_AP'),
-                            self.tb.createControl('shell_HEAT')],
-                'column2': [self.tb.createEmpty(),
-                            self.tb.createEmpty(),
-                            self.tb.createEmpty(),
-                            self.tb.createControl('auto_key_pressed'),
-                            self.tb.createControl('random_key'),
+                            self.tb.createControl('shell_HEAT'),
+                            self.tb.createControl('auto_key_pressed')],
+                'column2': [self.tb.createControl('specific_tank', 'TextInput'),
+                            self.tb.createControl('random_key', button={'iconSource': '../maps/icons/buttons/swap2.png'}),
                             self.tb.createControl('ranked_key'),
                             self.tb.createControl('other_modes_key'),
                             self.tb.createControl('light_key'),
@@ -288,7 +287,7 @@ class ConfigInterface2(PYmodsConfigInterface):
             if not config0.check_running:
                 self.pressed_key()
 
-    def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
+    def onApplySettings(self, settings):
         super(ConfigInterface2, self).onApplySettings(settings)
         self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
                                           shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
@@ -303,6 +302,17 @@ class ConfigInterface2(PYmodsConfigInterface):
                                           tanklist=settings['tanklist'],
                                           auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
                                           wheeled_key=settings['wheeled_key'])
+
+    def onButtonPress(self, vName, value):
+        if vName != 'random_key':
+            return
+        if self.data['specific_tank'] in self.data['tanklist']:
+            self.data['tanklist'].remove(self.data['specific_tank'])
+            SendGuiMessage('%s was removed.' % self.data['specific_tank'])
+        else:
+            self.data['tanklist'].append(self.data['specific_tank'])
+            SendGuiMessage('%s was added.' % self.data['specific_tank'])
+        self.onApplySettings(self.data)
 
     @process
     def pressed_key(self):
@@ -328,7 +338,7 @@ class ConfigInterface2(PYmodsConfigInterface):
                     veh_name = vData['vehicleType'].type.name  # str
                     user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                     if user is not None:
-                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):  # TODO: fix
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
                                 if not (user.isFriend() or user.isIgnored()):
@@ -403,7 +413,8 @@ class ConfigInterface3(PYmodsConfigInterface):
                      'wheeled_key': False,
                      'modeNumber': 1,
                      'currentNumber': 1,
-                     'activeMode': True}
+                     'activeMode': True,
+                     'specific_tank': 'Some specific tank'}
         self.i18n = {
             'UI_description': 'Mode 1',
             'UI_setting_name_text': 'Mode name',
@@ -462,7 +473,10 @@ class ConfigInterface3(PYmodsConfigInterface):
             'UI_setting_wheeled_tooltip': 'Every wheeled vehicle that hits you will be added to your blacklist.',
             'UI_setting_wheeled_key_text': 'Wheeled key',
             'UI_setting_wheeled_key_tooltip': 'By pressing the blacklist key every wheeled vehicle will '
-                                              'be added to your blacklist.'
+                                              'be added to your blacklist.',
+            'UI_setting_specific_tank_text': 'Some specific tank',
+            'UI_setting_specific_tank_tooltip': 'You can add here specific tanks to be blacklisted. Read the '
+                                                'README-file for further information. You will need the button below.'
         }
         super(ConfigInterface3, self).init()
         self.containerClass = MyPYmodsSettingContainer
@@ -484,12 +498,10 @@ class ConfigInterface3(PYmodsConfigInterface):
                             self.tb.createControl('spg'),
                             self.tb.createControl('wheeled'),
                             self.tb.createControl('shell_AP'),
-                            self.tb.createControl('shell_HEAT')],
-                'column2': [self.tb.createEmpty(),
-                            self.tb.createEmpty(),
-                            self.tb.createEmpty(),
-                            self.tb.createControl('auto_key_pressed'),
-                            self.tb.createControl('random_key'),
+                            self.tb.createControl('shell_HEAT'),
+                            self.tb.createControl('auto_key_pressed')],
+                'column2': [self.tb.createControl('specific_tank', 'TextInput'),
+                            self.tb.createControl('random_key', button={'iconSource': '../maps/icons/buttons/swap2.png'}),
                             self.tb.createControl('ranked_key'),
                             self.tb.createControl('other_modes_key'),
                             self.tb.createControl('light_key'),
@@ -517,7 +529,7 @@ class ConfigInterface3(PYmodsConfigInterface):
             if not config0.check_running:
                 self.pressed_key()
 
-    def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
+    def onApplySettings(self, settings):
         super(ConfigInterface3, self).onApplySettings(settings)
         self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
                                           shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
@@ -532,6 +544,17 @@ class ConfigInterface3(PYmodsConfigInterface):
                                           tanklist=settings['tanklist'],
                                           auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
                                           wheeled_key=settings['wheeled_key'])
+
+    def onButtonPress(self, vName, value):
+        if vName != 'random_key':
+            return
+        if self.data['specific_tank'] in self.data['tanklist']:
+            self.data['tanklist'].remove(self.data['specific_tank'])
+            SendGuiMessage('%s was removed.' % self.data['specific_tank'])
+        else:
+            self.data['tanklist'].append(self.data['specific_tank'])
+            SendGuiMessage('%s was added.' % self.data['specific_tank'])
+        self.onApplySettings(self.data)
 
     @process
     def pressed_key(self):
@@ -679,9 +702,6 @@ def before(_, events):
                                             config0.id_list.append(str(target_id))
                                     BigWorld.callback(0, AUTO_add)
             return
-
-
-# TODO: handle tanklist
 
 
 @run_before(PlayerAvatar, '_PlayerAvatar__onArenaPeriodChange')
