@@ -24,12 +24,12 @@ from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
 from skeletons.gui.battle_session import IBattleSessionProvider
 from extended_auto_bl_core import *
 
-
 __author__ = 'FvckingLatzyMan'
 __date__ = '09.04.2021'
 __credits__ = ['lgfrbcsgo']
 __version__ = '2.0'
 __status__ = 'Production'
+
 
 class ConfigInterface(PYmodsConfigInterface):
     def __init__(self):
@@ -103,8 +103,11 @@ class ConfigInterface(PYmodsConfigInterface):
                 SendGuiMessage("Disabled clearing your blacklist!")
             elif self.enable_clear:
                 contactsForTime = ContactsManager()
-                all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=round(len(all_bl_users)*1.1)))))
+                all_bl_users = contactsForTime.usersStorage.getList(
+                    ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+                SendGuiMessage(
+                    "Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(
+                        str(datetime.timedelta(seconds=round(len(all_bl_users) * 1.1)))))
         elif checkKeys(self.data['hotkey4']):
             if self.enable_clear:
                 self.clear_blacklist()
@@ -287,7 +290,18 @@ class ConfigInterface2(PYmodsConfigInterface):
                 self.pressed_key()
 
     def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
-        pass  # TODO: handle super(), new Schematic
+        super(ConfigInterface2, self).onApplySettings(settings)
+        self.schematic.updateSchematic(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                       shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                       random=settings['random'], random_key=settings['random_key'],
+                                       ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                       other_modes=settings['other_modes'], other_modes_key=settings['other_modes_key'],
+                                       light=settings['light'], light_key=settings['light_key'],
+                                       med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                       heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
+                                       spg=settings['spg'], spg_key=settings['spg_key'], tanklist=settings['tanklist'],
+                                       auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
+                                       wheeled_key=settings['wheeled_key'])
 
     @process
     def pressed_key(self):
@@ -504,7 +518,18 @@ class ConfigInterface3(PYmodsConfigInterface):
                 self.pressed_key()
 
     def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
-        pass  # TODO: handle super(), new Schematic
+        super(ConfigInterface3, self).onApplySettings(settings)
+        self.schematic.updateSchematic(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                       shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                       random=settings['random'], random_key=settings['random_key'],
+                                       ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                       other_modes=settings['other_modes'], other_modes_key=settings['other_modes_key'],
+                                       light=settings['light'], light_key=settings['light_key'],
+                                       med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                       heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
+                                       spg=settings['spg'], spg_key=settings['spg_key'], tanklist=settings['tanklist'],
+                                       auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
+                                       wheeled_key=settings['wheeled_key'])
 
     @process
     def pressed_key(self):
@@ -652,6 +677,8 @@ def before(_, events):
                                             config0.id_list.append(str(target_id))
                                     BigWorld.callback(0, AUTO_add)
             return
+
+
 # TODO: handle tanklist
 
 
@@ -674,7 +701,6 @@ g_modsListApi.updateModification('modsSettingsApi', enabled=False)
 config0 = ConfigInterface()
 config1 = ConfigInterface2()
 config2 = ConfigInterface3()
-
 
 if config0.data['extended'] and config0.data['enabled']:
     CONTACT_LIMIT.ROSTER_MAX_COUNT = config0.data['friends']
