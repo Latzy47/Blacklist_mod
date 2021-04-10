@@ -95,13 +95,51 @@ class ConfigInterface(PYmodsConfigInterface):
         self.readCurrentSettings()
 
     def onHotkeyPressed(self, event):
-        if event.isKeyDown() and checkKeys(self.data['hotkey2']):
-            print 'Test mod_Horns.py ###################'
+        if not event.isKeyDown() or not self.data['enabled']:
+            return
+        if checkKeys(self.data['hotkey3']):
+            self.toggle_enable_clear()
+            if not self.enable_clear:
+                SendGuiMessage("Disabled clearing your blacklist!")
+            elif self.enable_clear:
+                contactsForTime = ContactsManager()
+                all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=round(len(all_bl_users)*1.1)))))
+        elif checkKeys(self.data['hotkey4']):
+            if self.enable_clear:
+                self.clear_blacklist()
+
+    @process
+    def clear_blacklist(self):
+        arena = getattr(BigWorld.player(), 'arena', None)
+        if arena is None and not self.check_running:
+            self.check_running = True
+            blacklisted_contacts = ContactsManager()
+            all_users = blacklisted_contacts.usersStorage.getList(
+                ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+            idx = 0
+            while idx < len(all_users) and self.enable_clear:
+                blacklisted_contacts.removeIgnored(all_users[idx].getID(), False)
+                idx += 1
+                yield wait(1.1)
+                if idx % 500 == 0:
+                    users_left = len(all_users) - idx
+                    SendGuiMessage('There is ' + str(datetime.timedelta(seconds=round(users_left * 1.1))) + ' left!')
+            if idx == len(all_users) - 1:
+                SendGuiMessage('Cleared your blacklist!')
+            self.check_running = False
+
+    def toggle_enable_clear(self):
+        if not self.enable_clear:
+            self.enable_clear = True
+        elif self.enable_clear:
+            self.enable_clear = False
 
 
 class ConfigInterface2(PYmodsConfigInterface):
     def __init__(self):
         super(ConfigInterface2, self).__init__()
+        self.schematic = SchematicForMode()
 
     def init(self):
         self.ID = 'X_Auto_BL_2'
@@ -233,7 +271,9 @@ class ConfigInterface2(PYmodsConfigInterface):
                             self.tb.createControl('shell_HE')]}
 
     def onHotkeyPressed(self, event):
-        if event.isKeyDown() and checkKeys(config0.getData()['hotkey1']):
+        if not event.isKeyDown() or not self.data['enabled']:
+            return
+        if checkKeys(config0.getData()['hotkey1']):
             if self.data['currentNumber'] > 0:
                 self.data['currentNumber'] = 0
             else:
@@ -242,11 +282,81 @@ class ConfigInterface2(PYmodsConfigInterface):
             self.writeDataJson()
             if self.data['activeMode']:
                 SendGuiMessage(self.data['name'])
+        elif self.data['activeMode'] and checkKeys(config0.getData()['hotkey2']):
+            if not config0.check_running:
+                self.pressed_key()
+
+    def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
+        pass  # TODO: handle super(), new Schematic
+
+    @process
+    def pressed_key(self):
+        prebID = 0
+        config0.check_running = True
+        arena = getattr(BigWorld.player(), 'arena', None)
+        if arena is not None:
+            if arena.bonusType in self.schematic.key_mode:
+                sessionProvider = dependency.instance(IBattleSessionProvider)
+                setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+                adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+                databID = getAvatarDatabaseID()
+
+                vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
+                if vehID is not None and vehID in arena.vehicles:
+                    prebID = arena.vehicles[vehID]['prebattleID']
+
+                for (vehicleID, vData) in getArena().vehicles.iteritems():
+                    databaseID = vData['accountDBID']
+                    av_ses_id = vData['avatarSessionID']
+                    _prebattleID = vData['prebattleID']
+                    tag = vData['vehicleType'].type.tags  # frozenset
+                    veh_name = vData['vehicleType'].type.name  # str
+                    user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
+                    if user is not None:
+                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                            if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
+                                    veh_name in self.schematic.tanklist)):
+                                if not (user.isFriend() or user.isIgnored()):
+                                    if prebID > 0 and prebID != _prebattleID:
+                                        adding.addBattleIgnored(av_ses_id)
+                                        yield wait(1.1)
+                                    elif prebID == 0:
+                                        adding.addBattleIgnored(av_ses_id)
+                                        yield wait(1.1)
+                        else:
+                            if databaseID != databID and not (user.isFriend() or user.isIgnored()):
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                    else:
+                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                            if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
+                                    veh_name in self.schematic.tanklist)):
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                        else:
+                            if databaseID != databID:
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                SendGuiMessage('Blacklisting finished!')
+        config0.check_running = False
 
 
 class ConfigInterface3(PYmodsConfigInterface):
     def __init__(self):
         super(ConfigInterface3, self).__init__()
+        self.schematic = SchematicForMode()
 
     def init(self):
         self.ID = 'X_Auto_BL_3'
@@ -377,8 +487,10 @@ class ConfigInterface3(PYmodsConfigInterface):
                             self.tb.createControl('shell_APCR'),
                             self.tb.createControl('shell_HE')]}
 
-    def onHotkeyPressed(self, event):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
-        if event.isKeyDown() and checkKeys(config0.getData()['hotkey1']):
+    def onHotkeyPressed(self, event):
+        if not event.isKeyDown() or not self.data['enabled']:
+            return
+        if checkKeys(config0.getData()['hotkey1']):
             if self.data['currentNumber'] > 0:
                 self.data['currentNumber'] = 0
             else:
@@ -387,6 +499,75 @@ class ConfigInterface3(PYmodsConfigInterface):
             self.writeDataJson()
             if self.data['activeMode']:
                 SendGuiMessage(self.data['name'])
+        elif self.data['activeMode'] and checkKeys(config0.getData()['hotkey2']):
+            if not config0.check_running:
+                self.pressed_key()
+
+    def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
+        pass  # TODO: handle super(), new Schematic
+
+    @process
+    def pressed_key(self):
+        prebID = 0
+        config0.check_running = True
+        arena = getattr(BigWorld.player(), 'arena', None)
+        if arena is not None:
+            if arena.bonusType in self.schematic.key_mode:
+                sessionProvider = dependency.instance(IBattleSessionProvider)
+                setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
+                adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
+                databID = getAvatarDatabaseID()
+
+                vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
+                if vehID is not None and vehID in arena.vehicles:
+                    prebID = arena.vehicles[vehID]['prebattleID']
+
+                for (vehicleID, vData) in getArena().vehicles.iteritems():
+                    databaseID = vData['accountDBID']
+                    av_ses_id = vData['avatarSessionID']
+                    _prebattleID = vData['prebattleID']
+                    tag = vData['vehicleType'].type.tags  # frozenset
+                    veh_name = vData['vehicleType'].type.name  # str
+                    user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
+                    if user is not None:
+                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                            if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
+                                    veh_name in self.schematic.tanklist)):
+                                if not (user.isFriend() or user.isIgnored()):
+                                    if prebID > 0 and prebID != _prebattleID:
+                                        adding.addBattleIgnored(av_ses_id)
+                                        yield wait(1.1)
+                                    elif prebID == 0:
+                                        adding.addBattleIgnored(av_ses_id)
+                                        yield wait(1.1)
+                        else:
+                            if databaseID != databID and not (user.isFriend() or user.isIgnored()):
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                    else:
+                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                            if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
+                                    veh_name in self.schematic.tanklist)):
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                        else:
+                            if databaseID != databID:
+                                if prebID > 0 and prebID != _prebattleID:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                                elif prebID == 0:
+                                    adding.addBattleIgnored(av_ses_id)
+                                    yield wait(1.1)
+                SendGuiMessage('Blacklisting finished!')
+        config0.check_running = False
 
 
 class MyPYmodsSettingContainer(PYmodsSettingContainer):
@@ -447,88 +628,6 @@ def before(_, events):
                                     if target_id != BigWorld.player().playerVehicleID:
                                         global_vars.id_list.append(str(target_id))
                                 BigWorld.callback(0, AUTO_add)
-
-
-@process
-def pressed_key(self):
-    prebID = 0
-    global_vars.check_running = True
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is not None:
-        if arena.bonusType in global_vars.active_mode.key_mode:
-            sessionProvider = dependency.instance(IBattleSessionProvider)
-            setup = repositories.BattleSessionSetup(avatar=BigWorld.player(), sessionProvider=sessionProvider)
-            adding = anonymizer_fakes_ctrl.AnonymizerFakesController(setup)
-            databID = getAvatarDatabaseID()
-
-            vehID = getattr(BigWorld.player(), 'playerVehicleID', None)
-            if vehID is not None and vehID in arena.vehicles:
-                prebID = arena.vehicles[vehID]['prebattleID']
-
-            for (vehicleID, vData) in getArena().vehicles.iteritems():
-                databaseID = vData['accountDBID']
-                av_ses_id = vData['avatarSessionID']
-                _prebattleID = vData['prebattleID']
-                tag = vData['vehicleType'].type.tags  # frozenset
-                veh_name = vData['vehicleType'].type.name  # str
-                user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
-                if user is not None:
-                    if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
-                            if not (user.isFriend() or user.isIgnored()):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                    else:
-                        if databaseID != databID and not (user.isFriend() or user.isIgnored()):
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                else:
-                    if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                    else:
-                        if databaseID != databID:
-                            if prebID > 0 and prebID != _prebattleID:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-                            elif prebID == 0:
-                                adding.addBattleIgnored(av_ses_id)
-                                yield wait(1.1)
-            SendGuiMessage('Blacklisting finished!')
-    global_vars.check_running = False
-
-
-@process
-def clear_blacklist():
-    arena = getattr(BigWorld.player(), 'arena', None)
-    if arena is None and not global_vars.check_running:
-        global_vars.check_running = True
-        blacklisted_contacts = ContactsManager()
-        all_users = blacklisted_contacts.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-        idx = 0
-        while idx < len(all_users) and global_vars.enable_clear:
-            blacklisted_contacts.removeIgnored(all_users[idx].getID(), False)
-            idx += 1
-            yield wait(1.1)
-            if idx % 500 == 0:
-                users_left = len(all_users) - idx
-                SendGuiMessage('There is '+str(datetime.timedelta(seconds=round(users_left*1.1)))+' left!')
-        if idx == len(all_users)-1:
-            SendGuiMessage('Cleared your blacklist!')
-        global_vars.check_running = False
 
 
 @run_before(game, 'handleKeyEvent')
