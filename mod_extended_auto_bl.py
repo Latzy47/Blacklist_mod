@@ -26,7 +26,7 @@ from extended_auto_bl_core import *
 
 __author__ = 'FvckingLatzyMan'
 __date__ = '09.04.2021'
-__credits__ = ['lgfrbcsgo']
+__credits__ = ['lgfrbcsgo', 'Polyacov_Yury', 'Iliev Renat', 'Andruschyshyn Andrey']
 __version__ = '2.0'
 __status__ = 'Production'
 
@@ -47,7 +47,7 @@ class ConfigInterface(PYmodsConfigInterface):
                             'hotkey4': [Keys.KEY_X, [Keys.KEY_LALT, Keys.KEY_RALT]]}  # start clear
         self.data = {'enabled': True,
                      'ignored': 1000000,
-                     'extended': True,
+                     'extended': False,
                      'friends': 1000000,
                      'hotkey1': self.defaultKeys['hotkey1'],
                      'hotkey2': self.defaultKeys['hotkey2'],
@@ -56,13 +56,15 @@ class ConfigInterface(PYmodsConfigInterface):
         self.i18n = {
             'UI_description': 'Extended automated blacklist',
             'UI_setting_ignored_text': 'Number blacklist',
-            'UI_setting_ignored_tooltip': 'This number shows the length of your blacklist.',
+            'UI_setting_ignored_tooltip': 'This number shows the length of your blacklist.\n'
+                                          'Restarting the game is required to take effect.',
             'UI_setting_extended_text': 'Extend lists',
             'UI_setting_extended_tooltip': 'This enables/disables the extention of the blacklist'
                                            ' and friendlist.\n'
                                            'Restarting the game is required to take effect.',
             'UI_setting_friends_text': 'Number friendlist',
-            'UI_setting_friends_tooltip': 'This number shows the length of your friendlist.',
+            'UI_setting_friends_tooltip': 'This number shows the length of your friendlist.\n'
+                                          'Restarting the game is required to take effect.',
             'UI_setting_hotkey1_text': 'Switch modes',
             'UI_setting_hotkey1_tooltip': 'Pressing this hotkey will switch between modes.',
             'UI_setting_hotkey2_text': 'Blacklist key',
@@ -338,7 +340,7 @@ class ConfigInterface2(PYmodsConfigInterface):
                     veh_name = vData['vehicleType'].type.name  # str
                     user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                     if user is not None:
-                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):  # TODO: fix
+                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:  # TODO: check
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
                                 if not (user.isFriend() or user.isIgnored()):
@@ -348,26 +350,10 @@ class ConfigInterface2(PYmodsConfigInterface):
                                     elif prebID == 0:
                                         adding.addBattleIgnored(av_ses_id)
                                         yield wait(1.1)
-                        else:
-                            if databaseID != databID and not (user.isFriend() or user.isIgnored()):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
                     else:
-                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                        else:
-                            if databaseID != databID:
                                 if prebID > 0 and prebID != _prebattleID:
                                     adding.addBattleIgnored(av_ses_id)
                                     yield wait(1.1)
@@ -580,7 +566,7 @@ class ConfigInterface3(PYmodsConfigInterface):
                     veh_name = vData['vehicleType'].type.name  # str
                     user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                     if user is not None:
-                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:  # TODO: check
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
                                 if not (user.isFriend() or user.isIgnored()):
@@ -590,26 +576,10 @@ class ConfigInterface3(PYmodsConfigInterface):
                                     elif prebID == 0:
                                         adding.addBattleIgnored(av_ses_id)
                                         yield wait(1.1)
-                        else:
-                            if databaseID != databID and not (user.isFriend() or user.isIgnored()):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
                     else:
-                        if self.schematic.tank_cls_key or (self.schematic.tanklist[0] is not None):
+                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
-                                if prebID > 0 and prebID != _prebattleID:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                                elif prebID == 0:
-                                    adding.addBattleIgnored(av_ses_id)
-                                    yield wait(1.1)
-                        else:
-                            if databaseID != databID:
                                 if prebID > 0 and prebID != _prebattleID:
                                     adding.addBattleIgnored(av_ses_id)
                                     yield wait(1.1)
