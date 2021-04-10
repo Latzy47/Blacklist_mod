@@ -142,7 +142,6 @@ class ConfigInterface(PYmodsConfigInterface):
 class ConfigInterface2(PYmodsConfigInterface):
     def __init__(self):
         super(ConfigInterface2, self).__init__()
-        self.schematic = SchematicForMode()
 
     def init(self):
         self.ID = 'X_Auto_BL_2'
@@ -291,17 +290,19 @@ class ConfigInterface2(PYmodsConfigInterface):
 
     def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
         super(ConfigInterface2, self).onApplySettings(settings)
-        self.schematic.updateSchematic(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
-                                       shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
-                                       random=settings['random'], random_key=settings['random_key'],
-                                       ranked=settings['ranked'], ranked_key=settings['ranked_key'],
-                                       other_modes=settings['other_modes'], other_modes_key=settings['other_modes_key'],
-                                       light=settings['light'], light_key=settings['light_key'],
-                                       med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
-                                       heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
-                                       spg=settings['spg'], spg_key=settings['spg_key'], tanklist=settings['tanklist'],
-                                       auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
-                                       wheeled_key=settings['wheeled_key'])
+        self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                          shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                          random=settings['random'], random_key=settings['random_key'],
+                                          ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                          other_modes=settings['other_modes'],
+                                          other_modes_key=settings['other_modes_key'],
+                                          light=settings['light'], light_key=settings['light_key'],
+                                          med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                          heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
+                                          spg=settings['spg'], spg_key=settings['spg_key'],
+                                          tanklist=settings['tanklist'],
+                                          auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
+                                          wheeled_key=settings['wheeled_key'])
 
     @process
     def pressed_key(self):
@@ -370,7 +371,6 @@ class ConfigInterface2(PYmodsConfigInterface):
 class ConfigInterface3(PYmodsConfigInterface):
     def __init__(self):
         super(ConfigInterface3, self).__init__()
-        self.schematic = SchematicForMode()
 
     def init(self):
         self.ID = 'X_Auto_BL_3'
@@ -519,17 +519,19 @@ class ConfigInterface3(PYmodsConfigInterface):
 
     def onApplySettings(self, settings):  # TODO: gucken ob Schematic vorher oder nachher geladen wird
         super(ConfigInterface3, self).onApplySettings(settings)
-        self.schematic.updateSchematic(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
-                                       shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
-                                       random=settings['random'], random_key=settings['random_key'],
-                                       ranked=settings['ranked'], ranked_key=settings['ranked_key'],
-                                       other_modes=settings['other_modes'], other_modes_key=settings['other_modes_key'],
-                                       light=settings['light'], light_key=settings['light_key'],
-                                       med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
-                                       heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
-                                       spg=settings['spg'], spg_key=settings['spg_key'], tanklist=settings['tanklist'],
-                                       auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
-                                       wheeled_key=settings['wheeled_key'])
+        self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                          shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                          random=settings['random'], random_key=settings['random_key'],
+                                          ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                          other_modes=settings['other_modes'],
+                                          other_modes_key=settings['other_modes_key'],
+                                          light=settings['light'], light_key=settings['light_key'],
+                                          med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                          heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
+                                          spg=settings['spg'], spg_key=settings['spg_key'],
+                                          tanklist=settings['tanklist'],
+                                          auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
+                                          wheeled_key=settings['wheeled_key'])
 
     @process
     def pressed_key(self):
