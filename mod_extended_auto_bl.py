@@ -146,15 +146,15 @@ class ConfigInterface2(PYmodsConfigInterface):
         self.ID = 'X_Auto_BL_2'
         self.version = '%s (%s)' % (__version__, __date__)
         self.data = {'enabled': True,
-                     'name': 'Test mode',
+                     'name': 'Arty only',
                      'shell_AP': False,
                      'shell_APCR': False,
                      'shell_HEAT': False,
                      'shell_HE': False,
-                     'random': False,
-                     'random_key': False,
-                     'ranked': False,
-                     'ranked_key': False,
+                     'random': True,
+                     'random_key': True,
+                     'ranked': True,
+                     'ranked_key': True,
                      'other_modes': False,
                      'other_modes_key': False,
                      'light': False,
@@ -165,8 +165,8 @@ class ConfigInterface2(PYmodsConfigInterface):
                      'heavy_key': False,
                      'td': False,
                      'td_key': False,
-                     'spg': False,
-                     'spg_key': False,
+                     'spg': True,
+                     'spg_key': True,
                      'tanklist': [None],
                      'auto_key_pressed': False,
                      'wheeled': False,
@@ -291,19 +291,36 @@ class ConfigInterface2(PYmodsConfigInterface):
 
     def onApplySettings(self, settings):
         super(ConfigInterface2, self).onApplySettings(settings)
-        self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
-                                          shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
-                                          random=settings['random'], random_key=settings['random_key'],
-                                          ranked=settings['ranked'], ranked_key=settings['ranked_key'],
-                                          other_modes=settings['other_modes'],
-                                          other_modes_key=settings['other_modes_key'],
-                                          light=settings['light'], light_key=settings['light_key'],
-                                          med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
-                                          heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
-                                          spg=settings['spg'], spg_key=settings['spg_key'],
-                                          tanklist=settings['tanklist'],
-                                          auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
-                                          wheeled_key=settings['wheeled_key'])
+        if 'tanklist' in settings:
+            self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                              shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                              random=settings['random'], random_key=settings['random_key'],
+                                              ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                              other_modes=settings['other_modes'],
+                                              other_modes_key=settings['other_modes_key'],
+                                              light=settings['light'], light_key=settings['light_key'],
+                                              med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                              heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
+                                              spg=settings['spg'], spg_key=settings['spg_key'],
+                                              tanklist=settings['tanklist'],
+                                              auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
+                                              wheeled_key=settings['wheeled_key'])
+        else:
+            self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                              shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                              random=settings['random'], random_key=settings['random_key'],
+                                              ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                              other_modes=settings['other_modes'],
+                                              other_modes_key=settings['other_modes_key'],
+                                              light=settings['light'], light_key=settings['light_key'],
+                                              med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                              heavy_key=settings['heavy_key'], td=settings['td'],
+                                              td_key=settings['td_key'],
+                                              spg=settings['spg'], spg_key=settings['spg_key'],
+                                              tanklist=self.data['tanklist'],
+                                              auto_key_pressed=settings['auto_key_pressed'],
+                                              wheeled=settings['wheeled'],
+                                              wheeled_key=settings['wheeled_key'])
 
     def onButtonPress(self, vName, value):
         if vName != 'random_key':
@@ -317,7 +334,7 @@ class ConfigInterface2(PYmodsConfigInterface):
         self.onApplySettings(self.data)
 
     @process
-    def pressed_key(self):
+    def pressed_key(self):  # not working in training room coz prebID identical
         prebID = 0
         config0.check_running = True
         arena = getattr(BigWorld.player(), 'arena', None)
@@ -340,7 +357,7 @@ class ConfigInterface2(PYmodsConfigInterface):
                     veh_name = vData['vehicleType'].type.name  # str
                     user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                     if user is not None:
-                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:  # TODO: check
+                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
                                 if not (user.isFriend() or user.isIgnored()):
@@ -376,23 +393,23 @@ class ConfigInterface3(PYmodsConfigInterface):
                      'shell_AP': False,
                      'shell_APCR': False,
                      'shell_HEAT': False,
-                     'shell_HE': False,
-                     'random': False,
-                     'random_key': False,
-                     'ranked': False,
-                     'ranked_key': False,
+                     'shell_HE': True,
+                     'random': True,
+                     'random_key': True,
+                     'ranked': True,
+                     'ranked_key': True,
                      'other_modes': False,
                      'other_modes_key': False,
                      'light': False,
-                     'light_key': False,
+                     'light_key': True,
                      'med': False,
-                     'med_key': False,
+                     'med_key': True,
                      'heavy': False,
-                     'heavy_key': False,
+                     'heavy_key': True,
                      'td': False,
-                     'td_key': False,
+                     'td_key': True,
                      'spg': False,
-                     'spg_key': False,
+                     'spg_key': True,
                      'tanklist': [None],
                      'auto_key_pressed': False,
                      'wheeled': False,
@@ -517,19 +534,36 @@ class ConfigInterface3(PYmodsConfigInterface):
 
     def onApplySettings(self, settings):
         super(ConfigInterface3, self).onApplySettings(settings)
-        self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
-                                          shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
-                                          random=settings['random'], random_key=settings['random_key'],
-                                          ranked=settings['ranked'], ranked_key=settings['ranked_key'],
-                                          other_modes=settings['other_modes'],
-                                          other_modes_key=settings['other_modes_key'],
-                                          light=settings['light'], light_key=settings['light_key'],
-                                          med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
-                                          heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
-                                          spg=settings['spg'], spg_key=settings['spg_key'],
-                                          tanklist=settings['tanklist'],
-                                          auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
-                                          wheeled_key=settings['wheeled_key'])
+        if 'tanklist' in settings:
+            self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                              shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                              random=settings['random'], random_key=settings['random_key'],
+                                              ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                              other_modes=settings['other_modes'],
+                                              other_modes_key=settings['other_modes_key'],
+                                              light=settings['light'], light_key=settings['light_key'],
+                                              med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                              heavy_key=settings['heavy_key'], td=settings['td'], td_key=settings['td_key'],
+                                              spg=settings['spg'], spg_key=settings['spg_key'],
+                                              tanklist=settings['tanklist'],
+                                              auto_key_pressed=settings['auto_key_pressed'], wheeled=settings['wheeled'],
+                                              wheeled_key=settings['wheeled_key'])
+        else:
+            self.schematic = SchematicForMode(shell_AP=settings['shell_AP'], shell_APCR=settings['shell_APCR'],
+                                              shell_HEAT=settings['shell_HEAT'], shell_HE=settings['shell_HE'],
+                                              random=settings['random'], random_key=settings['random_key'],
+                                              ranked=settings['ranked'], ranked_key=settings['ranked_key'],
+                                              other_modes=settings['other_modes'],
+                                              other_modes_key=settings['other_modes_key'],
+                                              light=settings['light'], light_key=settings['light_key'],
+                                              med=settings['med'], med_key=settings['med_key'], heavy=settings['heavy'],
+                                              heavy_key=settings['heavy_key'], td=settings['td'],
+                                              td_key=settings['td_key'],
+                                              spg=settings['spg'], spg_key=settings['spg_key'],
+                                              tanklist=self.data['tanklist'],
+                                              auto_key_pressed=settings['auto_key_pressed'],
+                                              wheeled=settings['wheeled'],
+                                              wheeled_key=settings['wheeled_key'])
 
     def onButtonPress(self, vName, value):
         if vName != 'random_key':
@@ -543,7 +577,7 @@ class ConfigInterface3(PYmodsConfigInterface):
         self.onApplySettings(self.data)
 
     @process
-    def pressed_key(self):
+    def pressed_key(self):  # not working in training room coz prebID identical
         prebID = 0
         config0.check_running = True
         arena = getattr(BigWorld.player(), 'arena', None)
@@ -566,7 +600,7 @@ class ConfigInterface3(PYmodsConfigInterface):
                     veh_name = vData['vehicleType'].type.name  # str
                     user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                     if user is not None:
-                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:  # TODO: check
+                        if self.schematic.tank_cls_key or len(self.schematic.tanklist) > 1:
                             if databaseID != databID and ((self.schematic.tank_cls_key & tag) or (
                                     veh_name in self.schematic.tanklist)):
                                 if not (user.isFriend() or user.isIgnored()):
