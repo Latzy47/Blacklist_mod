@@ -128,7 +128,7 @@ class ConfigInterface(PYmodsConfigInterface):
                 if idx % 500 == 0:
                     users_left = len(all_users) - idx
                     SendGuiMessage('There is ' + str(datetime.timedelta(seconds=round(users_left * 1.1))) + ' left!')
-            if idx == len(all_users) - 1:
+            if idx == len(all_users):
                 SendGuiMessage('Cleared your blacklist!')
             self.check_running = False
 
