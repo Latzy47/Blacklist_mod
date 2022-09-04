@@ -1,39 +1,56 @@
 # coding=utf-8
+import functools
+import logging
+import sys
+from functools import wraps
 import datetime
 import BigWorld
-
 import BattleReplay
 import Keys
 import game
+import inspect
 from Avatar import PlayerAvatar
+from BattleFeedbackCommon import BATTLE_EVENT_TYPE
+from adisp import async, process
 from avatar_helpers import getAvatarDatabaseID
+from debug_utils import LOG_CURRENT_EXCEPTION
+from gui import SystemMessages
 from gui.battle_control.avatar_getter import getArena
 from gui.battle_control.controllers import anonymizer_fakes_ctrl
 from gui.battle_control.controllers import feedback_events
 from gui.battle_control.controllers import repositories
 from helpers import dependency
+from messenger import MessengerEntry
 from messenger.m_constants import UserEntityScope
 from messenger.proto.xmpp.xmpp_constants import CONTACT_LIMIT
 from messenger.proto.xmpp.contacts import ContactsManager
 from messenger.proto.xmpp.xmpp_constants import XMPP_ITEM_TYPE
 from messenger.proto.xmpp.find_criteria import ItemsFindCriteria
 from skeletons.gui.battle_session import IBattleSessionProvider
-from extended_auto_bl_core import *
+from extended_auto_bl_core_old import *
 
-__author__ = 'FvckingLatzyMan'
+__author__ = 'Latzy_Primus'
 __credits__ = ['lgfrbcsgo']
 __version__ = '1.31'
 __status__ = 'Production'
-
 if not os.path.exists('res_mods/configs'):
     os.makedirs('res_mods/configs')
-
-
+_logger = logging.getLogger(__name__)
+gui = MessengerEntry.g_instance.gui
+DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST,
+                           BATTLE_EVENT_TYPE.TRACK_ASSIST,
+                           BATTLE_EVENT_TYPE.STUN_ASSIST,
+                           BATTLE_EVENT_TYPE.DAMAGE,
+                           BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
 disabled_mode_dict, arty_mode_dict, he_mode_dict, he_bl_mode_dict = global_vars.loadModes()
 disabled_mode = SchematicForMode(**disabled_mode_dict)
+disabled_mode.removeNone()
 arty_mode = SchematicForMode(**arty_mode_dict)
+arty_mode.removeNone()
 he_mode = SchematicForMode(**he_mode_dict)
+he_mode.removeNone()
 he_bl_mode = SchematicForMode(**he_bl_mode_dict)
+he_bl_mode.removeNone()
 global_vars.all_modes.append(disabled_mode)
 global_vars.all_modes.append(arty_mode)
 global_vars.all_modes.append(he_mode)
@@ -64,6 +81,39 @@ def AUTO_add():
         global_vars.check_running = False
 
 
+def hook(hook_handler):
+    def build_decorator(module, func_name):
+
+        def decorator(func):
+            orig_func = getattr(module, func_name)
+
+            @wraps(orig_func)
+            def func_wrapper(*args, **kwargs):
+                return hook_handler(orig_func, func, *args, **kwargs)
+
+            if inspect.ismodule(module):
+                setattr(sys.modules[module.__name__], func_name, func_wrapper)
+            elif inspect.isclass(module):
+                setattr(module, func_name, func_wrapper)
+            return func
+
+        return decorator
+
+    return build_decorator
+
+
+@hook
+def run_before(orig_func, func, *args, **kwargs):
+    try:
+        try:
+            return func(*args, **kwargs)
+        except:
+            LOG_CURRENT_EXCEPTION()
+
+    finally:
+        return orig_func(*args, **kwargs)
+
+
 @run_before(PlayerAvatar, 'onBattleEvents')
 def before(_, events):
     arena = getattr(BigWorld.player(), 'arena', None)
@@ -86,6 +136,11 @@ def before(_, events):
                                     if target_id != BigWorld.player().playerVehicleID:
                                         global_vars.id_list.append(str(target_id))
                                 BigWorld.callback(0, AUTO_add)
+
+
+@async
+def wait(seconds, callback):
+    BigWorld.callback(seconds, lambda: callback(None))
 
 
 @process
@@ -113,7 +168,8 @@ def pressed_key():
                 user = adding.usersStorage.getUser(av_ses_id, scope=UserEntityScope.BATTLE)
                 if user is not None:
                     if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
+                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (
+                                veh_name in global_vars.active_mode.tanklist)):
                             if not (user.isFriend() or user.isIgnored()):
                                 if prebID > 0 and prebID != _prebattleID:
                                     adding.addBattleIgnored(av_ses_id)
@@ -131,7 +187,8 @@ def pressed_key():
                                 yield wait(1.1)
                 else:
                     if global_vars.active_mode.tank_cls_key or (global_vars.active_mode.tanklist[0] is not None):
-                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (veh_name in global_vars.active_mode.tanklist)):
+                        if databaseID != databID and ((global_vars.active_mode.tank_cls_key & tag) or (
+                                veh_name in global_vars.active_mode.tanklist)):
                             if prebID > 0 and prebID != _prebattleID:
                                 adding.addBattleIgnored(av_ses_id)
                                 yield wait(1.1)
@@ -156,7 +213,8 @@ def clear_blacklist():
     if arena is None and not global_vars.check_running:
         global_vars.check_running = True
         blacklisted_contacts = ContactsManager()
-        all_users = blacklisted_contacts.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+        all_users = blacklisted_contacts.usersStorage.getList(
+            ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
         idx = 0
         while idx < len(all_users) and global_vars.enable_clear:
             blacklisted_contacts.removeIgnored(all_users[idx].getID(), False)
@@ -164,10 +222,27 @@ def clear_blacklist():
             yield wait(1.1)
             if idx % 500 == 0:
                 users_left = len(all_users) - idx
-                SendGuiMessage('There is '+str(datetime.timedelta(seconds=round(users_left*1.1)))+' left!')
-        if idx == len(all_users)-1:
+                SendGuiMessage('There is ' + str(datetime.timedelta(seconds=round(users_left * 1.1))) + ' left!')
+        if idx == len(all_users) - 1:
             SendGuiMessage('Cleared your blacklist!')
         global_vars.check_running = False
+
+
+def sendMessage(message, types=SystemMessages.SM_TYPE.Warning):
+    if BigWorld.player():
+        SystemMessages.pushMessage(message, types)
+    else:
+        BigWorld.callback(1, functools.partial(sendMessage, message, types))
+
+
+def SendGuiMessage(message, types=SystemMessages.SM_TYPE.Warning, enable=True):
+    if enable:
+        arena = getattr(BigWorld.player(), 'arena', None)
+        if arena is not None:
+            gui.addClientMessage(message, isCurrentPlayer=True)
+        elif BigWorld.player():
+            sendMessage(message, types=types)
+    return
 
 
 @run_before(game, 'handleKeyEvent')
@@ -192,8 +267,11 @@ def new_handler(event):
                 SendGuiMessage("Disabled clearing your blacklist!")
             elif global_vars.enable_clear:
                 contactsForTime = ContactsManager()
-                all_bl_users = contactsForTime.usersStorage.getList(ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
-                SendGuiMessage("Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(str(datetime.timedelta(seconds=round(len(all_bl_users)*1.1)))))
+                all_bl_users = contactsForTime.usersStorage.getList(
+                    ItemsFindCriteria(XMPP_ITEM_TYPE.PERSISTENT_BLOCKING_LIST))
+                SendGuiMessage(
+                    "Enabled clearing your blacklist!\nMake sure you are in the garage!\nClearing everything will take {}!".format(
+                        str(datetime.timedelta(seconds=round(len(all_bl_users) * 1.1)))))
         elif isDown and mods == 4 and key == Keys.KEY_X:
             if global_vars.enable_clear:
                 clear_blacklist()

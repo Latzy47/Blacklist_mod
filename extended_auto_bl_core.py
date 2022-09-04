@@ -19,6 +19,7 @@ DAMAGE_EVENTS = frozenset([BATTLE_EVENT_TYPE.RADIO_ASSIST, BATTLE_EVENT_TYPE.TRA
                            BATTLE_EVENT_TYPE.TANKING, BATTLE_EVENT_TYPE.RECEIVED_DAMAGE])
 
 
+# from constants import BATTLE_LOG_SHELL_TYPES
 class SHELL_TYPES(object):
     HOLLOW_CHARGE = 'HOLLOW_CHARGE'
     HIGH_EXPLOSIVE = 'HIGH_EXPLOSIVE'
@@ -30,7 +31,7 @@ class SHELL_TYPES(object):
 
 class SchematicForMode(object):
     other_game_modes = (0, 2, 4, 5, 6, 7, 9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25,
-                        26, 27, 28, 29, 30, 31, 32, 33)
+                        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41)
 
     def __init__(self, shell_AP=False, shell_APCR=False, shell_HEAT=False,
                  shell_HE=False, random=False, random_key=False,
