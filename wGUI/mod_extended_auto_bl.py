@@ -111,7 +111,7 @@ class ConfigInterface(PYmodsConfigInterface):
             if self.enable_clear:
                 self.clear_blacklist()
 
-    @process
+    @adisp_process
     def clear_blacklist(self):
         arena = getattr(BigWorld.player(), 'arena', None)
         if arena is None and not self.check_running:
@@ -333,7 +333,7 @@ class ConfigInterface2(PYmodsConfigInterface):
             SendGuiMessage('%s was added.' % self.data['specific_tank'])
         self.onApplySettings(self.data)
 
-    @process
+    @adisp_process
     def pressed_key(self):  # not working in training room coz prebID identical
         prebID = 0
         config0.check_running = True
@@ -576,7 +576,7 @@ class ConfigInterface3(PYmodsConfigInterface):
             SendGuiMessage('%s was added.' % self.data['specific_tank'])
         self.onApplySettings(self.data)
 
-    @process
+    @adisp_process
     def pressed_key(self):  # not working in training room coz prebID identical
         prebID = 0
         config0.check_running = True
@@ -640,7 +640,7 @@ class NewCI(CI):
         return {}
 
 
-@process
+@adisp_process
 def AUTO_add():
     if not config0.check_running:
         config0.check_running = True

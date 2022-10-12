@@ -3,7 +3,7 @@
 import BigWorld
 
 import BattleReplay
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from avatar_helpers import getAvatarDatabaseID
 from gui.battle_control.avatar_getter import getArena
 from gui.battle_control.controllers import anonymizer_fakes_ctrl
@@ -51,12 +51,12 @@ def run_before(orig_func, func, *args, **kwargs):
         return orig_func(*args, **kwargs)
 
 
-@async
+@adisp_async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
 
 
-@process
+@adisp_process
 def teambl_key():
     prebID = 0
     arena = getattr(BigWorld.player(), 'arena', None)

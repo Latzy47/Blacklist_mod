@@ -6,7 +6,7 @@ from debug_utils import LOG_CURRENT_EXCEPTION
 import sys
 import inspect
 from functools import wraps
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from gui import SystemMessages
 import functools
 from messenger import MessengerEntry
@@ -134,7 +134,7 @@ def run_before(orig_func, func, *args, **kwargs):
         return orig_func(*args, **kwargs)
 
 
-@async
+@adisp_async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
 

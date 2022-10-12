@@ -11,7 +11,7 @@ import game
 import inspect
 from Avatar import PlayerAvatar
 from BattleFeedbackCommon import BATTLE_EVENT_TYPE
-from adisp import async, process
+from adisp import adisp_async, adisp_process
 from avatar_helpers import getAvatarDatabaseID
 from debug_utils import LOG_CURRENT_EXCEPTION
 from gui import SystemMessages
@@ -58,7 +58,7 @@ global_vars.all_modes.append(he_bl_mode)
 global_vars.loadJson()
 
 
-@process
+@adisp_process
 def AUTO_add():
     if not global_vars.check_running:
         global_vars.check_running = True
@@ -138,12 +138,12 @@ def before(_, events):
                                 BigWorld.callback(0, AUTO_add)
 
 
-@async
+@adisp_async
 def wait(seconds, callback):
     BigWorld.callback(seconds, lambda: callback(None))
 
 
-@process
+@adisp_process
 def pressed_key():
     prebID = 0
     global_vars.check_running = True
@@ -207,7 +207,7 @@ def pressed_key():
     global_vars.check_running = False
 
 
-@process
+@adisp_process
 def clear_blacklist():
     arena = getattr(BigWorld.player(), 'arena', None)
     if arena is None and not global_vars.check_running:
